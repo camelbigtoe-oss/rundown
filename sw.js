@@ -1,11 +1,11 @@
 // Offline cache for THE RUNDOWN. Bump VERSION after changing any file.
 // Online team play still needs a connection; everything else works offline.
-const VERSION = "rundown-v13";
+const VERSION = "rundown-v14";
 const CORE = [
   "./", "index.html", "style.css", "sprites.js", "portraits.js", "data.js", "rpg.js", "stats.js", "bank.js",
   "q-gk.js", "q-nz.js", "q-geo.js", "q-sci.js", "q-sport.js", "q-ent.js", "q-hist.js", "q-hp.js", "q-games.js", "q-food.js", "q-lit.js", "q-art.js", "q-music.js", "q-words.js", "q-myth.js", "q-space.js", "q-animals.js", "q-tech.js", "q-body.js", "q-maths.js", "q-cars.js", "ponder.js",
   "flags.js", "sfx.js", "studio.js", "engine.js", "net.js", "pub.js", "ui.js",
-  "manifest.json", "icon.svg", "icon-192.png", "icon-512.png",
+  "manifest.json", "icon-64.png", "icon-192.png", "icon-512.png", "apple-touch-icon.png",
 ];
 
 self.addEventListener("install", (e) => {
