@@ -104,5 +104,8 @@ const RPG = (() => {
     const i = CHAR_ORDER.indexOf(id); if (i >= 0) CHAR_ORDER.splice(i, 1);
   }
 
-  return { CATS, SHORT, MAX, get, stat, stats, gain, need, best, hint, catOf, bump, beat, isUnlocked, available, checkUnlocks, addCustom, removeCustom, get prog() { return prog; } };
+  // secret links: ?unlock=all unlocks every hidden character on this device, ?unlock=reset locks them again
+  function unlockAll() { prog.unlocked = Object.keys(UNLOCKS); saveProg(); }
+  function relockAll() { prog.unlocked = []; saveProg(); }
+  return { unlockAll, relockAll, CATS, SHORT, MAX, get, stat, stats, gain, need, best, hint, catOf, bump, beat, isUnlocked, available, checkUnlocks, addCustom, removeCustom, get prog() { return prog; } };
 })();

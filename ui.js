@@ -807,6 +807,12 @@ const UI = (() => {
   document.addEventListener("pointerdown", wake, { once: true });
 
   title();
+  {
+    const u = new URLSearchParams(location.search).get("unlock");
+    if (u === "all") { RPG.unlockAll(); setTimeout(() => { shout("UNLOCKED!", "lvl"); toast("All hidden characters unlocked on this device", 3000); }, 400); }
+    if (u === "reset") { RPG.relockAll(); toast("Hidden characters locked again on this device", 3000); }
+    if (u) history.replaceState(null, "", location.pathname);
+  }
   if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
 
   return { esc, spr, portrait, vn, bar, show, toast, title, money, LS, SAVE, me, statBars, levelUp, shout, typeIn, unlockCheck };

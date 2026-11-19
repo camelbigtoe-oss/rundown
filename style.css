@@ -438,9 +438,9 @@ button { cursor: pointer; }
 .hunch.knows { color: var(--gold); }
 
 /* roster: full-body model beside the stats */
-.char-card { display: grid; grid-template-columns: 104px 1fr; gap: 12px; align-items: center; }
-.cc-model { display: flex; justify-content: center; align-items: flex-end; height: 156px; background: radial-gradient(ellipse 42% 8% at 50% 96%, rgba(255, 111, 142, .5), transparent 70%); }
-.cc-model .spr { width: 96px; height: 144px; }
+.char-card { display: grid; grid-template-columns: 132px 1fr; gap: 10px; align-items: center; }
+.cc-model { display: flex; justify-content: center; align-items: flex-end; height: 204px; background: radial-gradient(ellipse 42% 8% at 50% 96%, rgba(255, 111, 142, .5), transparent 70%); }
+.cc-model .spr { width: 128px; height: 192px; }
 .char-card.locked .cc-model .spr { filter: brightness(0); opacity: .8; }
 .cc-main { min-width: 0; }
 .cc-main .statgrid { grid-template-columns: 1fr; gap: 3px; margin-top: 8px; }
