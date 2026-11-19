@@ -204,7 +204,7 @@ Object.assign(CHARS, {
 CHARS.connor.tag = "Quiz master. Team captain.";
 CHAR_ORDER.splice(0, CHAR_ORDER.length, "connor", "jackie", "zach", "jeremy", "mel", "aroha", "steve", "priya", "june", "tama", "jess");
 
-const TEAM = { name: "Team Discovery Channel", captain: "connor", members: ["connor", "jackie", "zach", "jeremy"] };
+const TEAM = { name: "Team Discovery Channel", captain: "connor", members: ["connor", "mel", "jackie", "zach", "jeremy"] };
 
 // starting level and stats; levels and stats then grow with play (see rpg.js)
 const BASE = (() => {

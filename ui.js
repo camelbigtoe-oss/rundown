@@ -138,18 +138,21 @@ const UI = (() => {
     screen = "roster";
     const card = (id) => {
       const c = CHARS[id];
+      // full-body model standing beside the stats
       if (c.hidden && !RPG.isUnlocked(id)) return `<div class="char-card win locked">
-        <div class="cc-top">${portrait(id, "pt-l")}<div class="cc-id"><b>???</b><small>Hidden character</small><div class="lv"><span>Locked</span><em>${esc(UNLOCKS[id].hint)}</em></div></div></div></div>`;
+        <div class="cc-model">${spr(id, "big")}</div>
+        <div class="cc-main"><div class="cc-id"><b>???</b><small>Hidden character</small><div class="lv"><span>Locked</span><em>${esc(UNLOCKS[id].hint)}</em></div></div></div></div>`;
       const r = RPG.get(id), pct = Math.min(100, (r.xp / RPG.need(r.lv)) * 100);
       return `<div class="char-card win ${id === TEAM.captain ? "captain" : ""}">
-        <div class="cc-top">${portrait(id, "pt-l")}
+        <div class="cc-model">${spr(id, "big bob")}</div>
+        <div class="cc-main">
           <div class="cc-id"><b>${esc(c.name)}</b><small>${esc(c.tag)}</small>
             <div class="lv"><span>Lv ${r.lv}</span>${id === TEAM.captain ? `<em>QUIZ MASTER</em>` : `<em>Best: ${RPG.SHORT[RPG.best(id)]}</em>`}</div>
             <div class="xp" title="XP to next level"><i style="width:${pct}%"></i></div>
           </div>
+          ${statBars(id)}
+          ${c.custom ? `<button class="link" data-act="del-custom" data-id="${id}">Delete character</button>` : ""}
         </div>
-        ${statBars(id)}
-        ${c.custom ? `<button class="link" data-act="del-custom" data-id="${id}">Delete character</button>` : ""}
       </div>`;
     };
     show(`${bar("THE TEAM")}
