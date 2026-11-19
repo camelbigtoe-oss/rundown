@@ -229,7 +229,7 @@ Object.assign(CHARS, {
   raven: {
     name: "Raven Noir", tag: "Goth queen of the history round", hidden: true,
     spec: {
-      build: "curvy", bust: 2, skin: "#f3e3e6", hair: "#141018", hairStyle: "long", eye: "#8a3ad0", lashes: 1, lips: "#5a0a2a", mouth: "smirk", choker: "#111", earring: "#c9c9d6",
+      build: "curvy", bust: 3, hips: 5, skin: "#f3e3e6", hair: "#141018", hairStyle: "long", eye: "#8a3ad0", lashes: 1, lips: "#5a0a2a", mouth: "smirk", choker: "#111", earring: "#c9c9d6",
       top: { style: "corset", color: "#1a1020", trim: "#7a2a6a" }, bottom: { style: "skirt", color: "#141018" },
       socks: { color: "#111", net: 1, from: 37 }, shoes: { style: "tall", color: "#111" },
     },
@@ -237,7 +237,7 @@ Object.assign(CHARS, {
   velvet: {
     name: "Velvet Hex", tag: "Witchy. Mixes potions and science.", hidden: true,
     spec: {
-      build: "curvy", bust: 2, skin: "#ecd6d2", hair: "#5a2a8a", hairStyle: "streak", eye: "#d04a8a", lashes: 1, lips: "#3a0a3a", mouth: "smile", choker: "#2a0a2a", chokerGem: "#9a5ad0",
+      build: "curvy", bust: 3, hips: 5, skin: "#ecd6d2", hair: "#5a2a8a", hairStyle: "streak", eye: "#d04a8a", lashes: 1, lips: "#3a0a3a", mouth: "smile", choker: "#2a0a2a", chokerGem: "#9a5ad0",
       top: { style: "gown", color: "#2a0f3a", trim: "#9a5ad0", sleeve: "#3a1a4a" }, bottom: { style: "none", color: "#000" },
       shoes: { style: "heel", color: "#141014" },
     },
@@ -245,7 +245,7 @@ Object.assign(CHARS, {
   nyx: {
     name: "Nyx", tag: "Punk goth. Knows every song.", hidden: true,
     spec: {
-      build: "avg", bust: 2, skin: "#f0dcd6", hair: "#e8e8f0", hairStyle: "bob", eye: "#ff3a4a", lashes: 1, lips: "#2a0a1a", mouth: "smirk", choker: "#111", earring: "#c9c9d6",
+      build: "avg", bust: 3, hips: 5, skin: "#f0dcd6", hair: "#e8e8f0", hairStyle: "bob", eye: "#ff3a4a", lashes: 1, lips: "#2a0a1a", mouth: "smirk", choker: "#111", earring: "#c9c9d6",
       top: { style: "denim", color: "#1a1a1a", inner: "#5a0a1a" }, bottom: { style: "skirt", color: "#2a1a2a" },
       socks: { color: "#111", net: 1, from: 35 }, shoes: { style: "tall", color: "#141414" },
     },
@@ -253,7 +253,7 @@ Object.assign(CHARS, {
   rei: {
     name: "Rei Nova", tag: "Starship pilot. Science ace.", hidden: true,
     spec: {
-      build: "curvy", bust: 2, skin: "#f6dccb", hair: "#3fa7ff", hairStyle: "long", eye: "#ff6f8e", lashes: 1, mouth: "grin", blush: 1,
+      build: "curvy", bust: 3, hips: 5, skin: "#f6dccb", hair: "#3fa7ff", hairStyle: "long", eye: "#ff6f8e", lashes: 1, mouth: "grin", blush: 1,
       top: { style: "bodysuit", color: "#eef2f6", accent: "#ff4d5e" }, bottom: { style: "tights", color: "#eef2f6" },
       shoes: { style: "boot", color: "#ff4d5e", sole: "#3a0a10" },
     },
@@ -261,7 +261,7 @@ Object.assign(CHARS, {
   ember: {
     name: "Ember", tag: "Fire mage. Lives for sport.", hidden: true,
     spec: {
-      build: "curvy", bust: 2, skin: "#f2c8a8", hair: "#ff4d2a", hairStyle: "ponytail", eye: "#ffb020", lashes: 1, lips: "#c0302a", mouth: "smile", earring: "#ffd166",
+      build: "curvy", bust: 3, hips: 5, skin: "#f2c8a8", hair: "#ff4d2a", hairStyle: "ponytail", eye: "#ffb020", lashes: 1, lips: "#c0302a", mouth: "smile", earring: "#ffd166",
       top: { style: "dress", color: "#b3132b", trim: "#ffd166" }, bottom: { style: "none", color: "#000" },
       shoes: { style: "tall", color: "#4a1a0a", accent: "#ffd166" },
     },
@@ -269,7 +269,7 @@ Object.assign(CHARS, {
   yuki: {
     name: "Yuki Storm", tag: "Ice ninja. Has been everywhere.", hidden: true,
     spec: {
-      build: "avg", bust: 2, strong: 1, skin: "#f4e6dc", hair: "#dff4ff", hairStyle: "long", eye: "#6fe3ff", lashes: 1, mouth: "smirk",
+      build: "avg", bust: 3, hips: 5, strong: 1, skin: "#f4e6dc", hair: "#dff4ff", hairStyle: "long", eye: "#6fe3ff", lashes: 1, mouth: "smirk",
       top: { style: "bodysuit", color: "#1d2a5a", accent: "#bfefff" }, bottom: { style: "tights", color: "#1d2a5a" },
       shoes: { style: "tall", color: "#bfefff", accent: "#1d2a5a" },
     },

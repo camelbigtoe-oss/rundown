@@ -38,7 +38,7 @@ const Sprites = (() => {
     const bc = bt.color, bs = shade(bc, -0.25);
     const longHair = ["long", "streak"].includes(s.hairStyle);
     const longSleeve = ["hoodie", "cardigan", "suit", "jumper", "coat", "blazer", "denim", "cloak", "gown", "bodysuit"].includes(t.style) || !!t.sleeve;
-    const bk = s.bust ? (s.bust >= 2 ? 2 : 1) : 0; // fuller figure: wider chest, arms sit further out
+    const bk = s.bust ? (s.bust >= 3 ? 5 : s.bust >= 2 ? 2 : 1) : 0; // fuller figure: wider chest, arms sit further out
 
     // floor shadow
     P("rgba(0,0,0,.25)", L - 2, 46, b.tw + 4, 1);
@@ -109,7 +109,11 @@ const Sprites = (() => {
     if (s.belly) { P(tc, L - 1, 24, b.tw + 2, 7); P(ts, R + 1, 24, 1, 7); P(tl, L - 1, 25, 1, 5); }
     if (s.build === "curvy") { P(tc, L - 1, 27, b.tw + 2, 4); P(ts, R + 1, 27, 1, 4); }
     P(ts, R - 1, 17, 2, 14); P(tl, L, 18, 1, 12);
-    if (bk) { P(tc, L - bk, 18, bk, 5 + bk); P(tc, R + 1, 18, bk, 5 + bk); P(ts, R + bk, 19, 1, 3 + bk); }
+    if (bk >= 4) {
+      // comically big: a rounded profile well past the shoulders
+      for (const [y, w] of [[18, 1], [19, 3], [20, 4], [21, 5], [22, 5], [23, 5], [24, 5], [25, 4], [26, 2]]) { P(tc, L - w, y, w, 1); P(tc, R + 1, y, w, 1); }
+      P(ts, R + 5, 21, 1, 4); P(ts, R + 4, 25, 1, 1); P(tl, L - 4, 21, 1, 3); P(tl, L - 3, 20, 1, 1);
+    } else if (bk) { P(tc, L - bk, 18, bk, 5 + bk); P(tc, R + 1, 18, bk, 5 + bk); P(ts, R + bk, 19, 1, 3 + bk); }
     // shoulder rounding
     P(tc, L - b.arm - bk + 1, 17, b.arm - 1, 1); P(tc, R + bk + 1, 17, b.arm - 1, 1);
 
@@ -186,10 +190,21 @@ const Sprites = (() => {
       P(t.trim || "#e9e1cf", mid - 1, 18, 2, 1);
     }
 
-    if (bk) {
+    if (bk >= 4) {
+      P("rgba(0,0,0,.3)", L - 3, 27, b.tw + 6, 1); P("rgba(0,0,0,.25)", mid - 1, 19, 2, 7);
+      P("rgba(255,255,255,.25)", L - 3, 20, 4, 2); P("rgba(255,255,255,.25)", mid + 2, 20, 4, 2);
+    } else if (bk) {
       P("rgba(0,0,0,.22)", L - bk + 1, 22 + bk, b.tw + 2 * bk - 2, 1);
       P("rgba(0,0,0,.14)", mid - 1, 20, 1, 2 + bk);
       P("rgba(255,255,255,.16)", L + 1, 19, 2, 1); P("rgba(255,255,255,.16)", mid + 1, 19, 2, 1);
+    }
+    // comically wide hips and bum, in whatever covers them
+    if (s.hips) {
+      const hc2 = t.style === "dress" || t.style === "gown" || bt.style === "none" ? tc : bc, hs2 = shade(hc2, -0.25), h = s.hips;
+      for (const [y, w] of [[27, 1], [28, Math.ceil(h / 2)], [29, h - 1], [30, h], [31, h], [32, h], [33, h], [34, h - 1], [35, h - 2], [36, h - 3]]) {
+        if (w <= 0) continue; P(hc2, L - w, y, w, 1); P(hc2, R + 1, y, w, 1); P(hs2, R + w, y, 1, 1);
+      }
+      P("rgba(255,255,255,.16)", L - h + 1, 30, 2, 3);
     }
     if (s.choker) { P(s.choker, 14, 16, 4, 1); P(s.chokerGem || "#c0304a", 15, 16, 1, 1); }
     // arms
@@ -244,9 +259,9 @@ const Sprites = (() => {
       P(hc, 10, 1, 12, 2); P(hc, 9, 3, 14, 3); P(hc, 9, 6, 2, 4); P(hc, 21, 6, 2, 4); P(hc, 11, 6, 4, 1); P(hc, 15, 5, 7, 2);
       P(hl, 12, 1, 5, 1); P(hl, 10, 3, 3, 1); P(hs, 19, 3, 3, 2);
     } else if (longHair) {
-      P(hc, 10, 2, 12, 3); P(hc, 9, 4, 14, 3); P(hc, 9, 6, 2, 13); P(hc, 21, 6, 2, 13); P(hc, 11, 5, 6, 2); P(hc, 17, 5, 3, 1);
+      P(hc, 10, 2, 12, 3); P(hc, 9, 4, 14, 3); P(hc, 9, 6, 2, bk >= 4 ? 11 : 13); P(hc, 21, 6, 2, bk >= 4 ? 11 : 13); P(hc, 11, 5, 6, 2); P(hc, 17, 5, 3, 1);
       P(hl, 11, 3, 6, 1); P(hl, 9, 8, 1, 9); P(hs, 22, 7, 1, 11); P(hl, 12, 5, 2, 1);
-      P(hc, 8, 17, 3, 5); P(hc, 21, 17, 3, 5); P(hs, 23, 18, 1, 4);
+      if (bk < 4) { P(hc, 8, 17, 3, 5); P(hc, 21, 17, 3, 5); P(hs, 23, 18, 1, 4); }
       if (st === "streak") { P("#f2f2f2", 12, 2, 2, 5); P("#f2f2f2", 9, 7, 1, 10); }
     } else if (st === "bob") {
       P(hc, 10, 2, 12, 3); P(hc, 9, 4, 14, 3); P(hc, 8, 6, 3, 9); P(hc, 21, 6, 3, 9); P(hc, 10, 5, 12, 2);

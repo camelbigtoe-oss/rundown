@@ -44,7 +44,12 @@ const Portraits = (() => {
     if (t.graphic === "globe") { P("#2f6fb0", 18, 34, 4, 4); P("#4bbf6a", 18, 35, 2, 1); P("#4bbf6a", 20, 37, 2, 1); }
     if (t.graphic === "hivis") { P("#d4f21f", sx, 32, 6, 8); P("#d4f21f", sx + sw - 6, 32, 6, 8); P("#cfd6dd", sx, 36, 6, 1); P("#cfd6dd", sx + sw - 6, 36, 6, 1); }
     if (t.graphic === "stripe") { P(t.stripe || "#fff", sx, 36, sw, 2); }
-    if (s.bust) {
+    if (s.bust >= 3) {
+      for (const cx of [14, 26]) for (let dy = -8; dy <= 8; dy++) { const w = Math.floor(Math.sqrt(64 - dy * dy)); P(tc, cx - w, 39 + dy, w * 2, 1); }
+      P(ts, 31, 35, 3, 5); P("rgba(0,0,0,.25)", 19, 33, 2, 7);
+      P("rgba(255,255,255,.22)", 9, 34, 4, 2); P("rgba(255,255,255,.22)", 21, 34, 4, 2);
+      if (st2 === "corset" || st2 === "gown" || st2 === "dress") { P(sk, 15, 30, 10, 2); P(sks, 18, 32, 4, 1); P(t.trim || shade(tc, -0.4), 8, 33, 2, 1); P(t.trim || shade(tc, -0.4), 30, 33, 2, 1); }
+    } else if (s.bust) {
       P("rgba(255,255,255,.16)", 13, 35, 5, 1); P("rgba(255,255,255,.16)", 22, 35, 5, 1);
       P("rgba(0,0,0,.2)", 19, 35, 2, 4); P("rgba(0,0,0,.22)", 12, 39, 16, 1);
     }
