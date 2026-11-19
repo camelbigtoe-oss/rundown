@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <title>THE RUNDOWN</title>
+  <meta name="description" content="A pixel game-show quiz. Outrun the hunter." />
+  <meta name="theme-color" content="#0a0b24" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <canvas id="studio" aria-hidden="true"></canvas>
+  <main id="app"></main>
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" defer></script>
+  <script src="sprites.js"></script>
+  <script src="data.js"></script>
+  <script src="bank.js"></script>
+  <script src="q-gk.js"></script>
+  <script src="q-nz.js"></script>
+  <script src="q-geo.js"></script>
+  <script src="q-sci.js"></script>
+  <script src="q-sport.js"></script>
+  <script src="q-ent.js"></script>
+  <script src="q-hist.js"></script>
+  <script src="flags.js"></script>
+  <script src="sfx.js"></script>
+  <script src="studio.js"></script>
+  <script src="engine.js"></script>
+  <script src="net.js"></script>
+  <script src="pub.js"></script>
+  <script src="ui.js"></script>
+</body>
+</html>
