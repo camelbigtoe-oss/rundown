@@ -201,7 +201,7 @@ Object.assign(CHARS, {
     },
   },
 });
-CHARS.connor.tag = "Quiz master. Team captain.";
+CHARS.connor.tag = "Quiz master. Team captain. Hates feet.";
 CHAR_ORDER.splice(0, CHAR_ORDER.length, "connor", "jackie", "zach", "jeremy", "mel", "aroha", "steve", "priya", "june", "tama", "jess");
 
 const TEAM = { name: "Team Discovery Channel", captain: "connor", members: ["connor", "mel", "jackie", "zach", "jeremy"] };

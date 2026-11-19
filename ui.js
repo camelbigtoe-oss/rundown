@@ -119,6 +119,7 @@ const UI = (() => {
           <button class="choice" data-go="online"><b>Team online</b><small>Everyone on their own phone</small></button>
           <button class="choice" data-go="pub"><b>Tuesday quiz</b><small>Quiz night at Phat Eddie's</small></button>
           <button class="choice" data-go="roster"><b>${esc(TEAM.name)}</b><small>Levels and stats</small></button>
+          <button class="choice" data-go="career"><b>Career stats</b><small>Records, results and streaks</small></button>
         </nav>
         <div class="records win">
           <div><small>Games</small><b>${rec.games}</b></div>
@@ -226,6 +227,62 @@ const UI = (() => {
       <div class="hcard-spr">${spr(h, "bob")}</div>
       <div class="hcard-txt"><b>${esc(H.name)}</b>${stars(H.stars)}<small>${esc(H.blurb)}</small></div>
     </button>`;
+  }
+
+  // ---------- career stats ----------
+  function career() {
+    screen = "career";
+    const d = Stats.data, rec = LS("rd.rec", { games: 0, wins: 0, total: 0, best: 0 }), pub = LS("rd.pubhist", []);
+    const pct = (r, t) => (t ? Math.round((r / t) * 100) + "%" : "–");
+    const tile = (label, val, sub = "") => `<div class="tile"><small>${label}</small><b>${val}</b>${sub ? `<span>${sub}</span>` : ""}</div>`;
+    // categories, best first; need a few answers before calling strongest or weakest
+    const cats = [...Object.keys(Bank.CATS), "flag"].map((k) => ({ k, name: k === "flag" ? "Flags" : Bank.CATS[k], r: (d.cats[k] || {}).r || 0, t: (d.cats[k] || {}).t || 0 }));
+    const played = cats.filter((c) => c.t > 0).sort((a, b) => b.r / b.t - a.r / a.t || b.t - a.t);
+    const ranked = played.filter((c) => c.t >= 5);
+    const strong = ranked[0], weak = ranked.length > 1 ? ranked[ranked.length - 1] : null;
+    const catRows = cats.slice().sort((a, b) => (b.t ? b.r / b.t : -1) - (a.t ? a.r / a.t : -1)).map((c) => `<div class="cat-row ${c.t ? "" : "none"}">
+      <span>${esc(c.name)}</span><div class="sbar"><i style="width:${c.t ? (c.r / c.t) * 100 : 0}%"></i></div><b>${pct(c.r, c.t)}</b><em>${c.r}/${c.t}</em></div>`).join("");
+    const hunters = HUNTER_ORDER.filter((h) => !HUNTERS[h].hidden || RPG.isUnlocked(h)).map((h) => {
+      const v = d.vs[h] || { w: 0, l: 0 };
+      return `<div class="vs-row">${portrait(h, "pt-s")}<span>${esc(HUNTERS[h].short)}</span><b class="w">${v.w}W</b><b class="l">${v.l}L</b></div>`;
+    }).join("");
+    const recent = d.games.slice(-10).reverse().map((g) => `<div class="g-row ${g.won ? "won" : "lost"}">
+      <span>${new Date(g.d).toLocaleDateString("en-NZ", { day: "numeric", month: "short" })}</span>
+      <span>${g.mode === "solo" ? "Solo" : g.mode === "online" ? "Online" : "Team"} v ${esc(HUNTERS[g.hunter] ? HUNTERS[g.hunter].short : g.hunter)}</span>
+      <b>${g.won ? "WIN " + money(g.amount) : "CAUGHT"}</b></div>`).join("") || `<p class="hint">No games yet. Go and play one!</p>`;
+    const scores = pub.map((p) => p.score), last = pub.slice(-10);
+    const maxS = Math.max(1, ...last.map((p) => p.max || 98));
+    const bars = last.map((p) => `<div class="bar-col" title="${esc(p.date)}"><i style="height:${(p.score / maxS) * 100}%"></i><span>${p.score}</span></div>`).join("");
+    const firsts = pub.filter((p) => p.place === "1st").length;
+    show(`${bar("CAREER STATS")}
+      <section class="career">
+        <div class="win cs-head">${portrait("connor", "pt-l")}<div><small>Career of</small><b>${esc(me.name || "Connor")}</b><span>Tracking since ${new Date(d.since).toLocaleDateString("en-NZ", { day: "numeric", month: "short", year: "numeric" })}</span></div></div>
+        <div class="tiles">
+          ${tile("Games", rec.games)}${tile("Wins", rec.wins, pct(rec.wins, rec.games) + " win rate")}
+          ${tile("Total won", money(rec.total))}${tile("Best win", money(rec.best))}
+          ${tile("Answered", d.answered)}${tile("Accuracy", pct(d.right, d.answered), d.right + " right")}
+          ${tile("Best streak", d.best.streak, "in a row")}${tile("Pushbacks", d.pushbacks)}
+        </div>
+        ${strong ? `<div class="win callouts"><div><small>Strongest</small><b>${esc(strong.name)}</b><span>${pct(strong.r, strong.t)}</span></div>${weak ? `<div><small>Needs work</small><b>${esc(weak.name)}</b><span>${pct(weak.r, weak.t)}</span></div>` : ""}</div>` : ""}
+        <h2 class="h">Personal bests</h2>
+        <div class="tiles">
+          ${tile("Best Cash Dash", money(d.best.cash))}${tile("Biggest pot won", money(d.best.pot))}
+          ${tile("Most Last Stand steps", d.best.steps)}${tile("High road taken home", money(d.best.offer))}
+        </div>
+        <h2 class="h">Accuracy by category</h2>
+        <div class="win cats">${catRows}</div>
+        <h2 class="h">Record against the hunters</h2>
+        <div class="win vs">${hunters}</div>
+        <h2 class="h">Recent games</h2>
+        <div class="win games">${recent}</div>
+        <h2 class="h">Tuesday quiz nights</h2>
+        <div class="tiles">
+          ${tile("Nights", pub.length)}${tile("Wins", firsts)}
+          ${tile("Best score", scores.length ? Math.max(...scores) : "–")}${tile("Average", scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : "–")}
+          ${tile("Ponderers solved", d.ponder)}${tile("Best place", pub.length ? ((n) => n + (n === 1 ? "st" : n === 2 ? "nd" : n === 3 ? "rd" : "th"))(Math.min(...pub.map((p) => parseInt(p.place)))) : "–")}
+        </div>
+        ${last.length ? `<div class="win chart"><small>Last ${last.length} quiz scores</small><div class="bars">${bars}</div></div>` : ""}
+      </section>`);
   }
 
   // ---------- Connor's outfits ----------
@@ -623,6 +680,11 @@ const UI = (() => {
   function sounds(p, s) {
     if (!p) return;
     const cur = s.players[s.turn], mineP = (pl) => pl && (role === "local" || pl.id === me.id);
+    if (s.cash && s.cash.fb && (!p.cash || !p.cash.fb || p.cash.fb.k !== s.cash.fb.k) && mineP(cur)) Stats.answer(s.cash.fb.c, s.cash.fb.ok);
+    if (s.board && p.board && s.board.step === "reveal" && p.board.step !== "reveal" && mineP(cur)) Stats.answer(s.board.c, s.board.pick === s.board.ans);
+    if (s.final && s.final.fb && (!p.final || !p.final.fb || p.final.fb.k !== s.final.fb.k) && (role === "local" || s.final.fb.who === me.id)) Stats.answer(s.final.fb.c, s.final.fb.ok);
+    if (s.final && s.final.push && s.final.push.done && s.final.push.ok && p.final && p.final.push && !p.final.push.done && (role === "local" || s.final.push.who === me.id)) Stats.bump("pushbacks");
+    if (s.phase === "offer" && p.phase !== "offer" && mineP(cur)) Stats.best("cash", cur.cash);
     if (s.cash && s.cash.fb && s.cash.fb.ok && (!p.cash || !p.cash.fb || p.cash.fb.k !== s.cash.fb.k) && mineP(cur)) { RPG.bump("correct"); levelUp(RPG.gain(cur.char, s.cash.fb.c, 1)); }
     if (s.board && p.board && s.board.step === "reveal" && p.board.step !== "reveal" && s.board.pick === s.board.ans && mineP(cur)) { RPG.bump("correct"); levelUp(RPG.gain(cur.char, s.board.c, 2)); }
     if (s.final && s.final.fb && s.final.fb.ok && (!p.final || !p.final.fb || p.final.fb.k !== s.final.fb.k)) {
@@ -668,6 +730,10 @@ const UI = (() => {
     if (s.won && won > 0) { RPG.beat(s.hunter); if (s.mode === "solo") RPG.bump("soloWins"); }
     RPG.bump("total", won); RPG.bump("games");
     RPG.bump("caught", mine.filter((p) => p.result === "caught").length);
+    Stats.game({ d: Date.now(), mode: s.mode, hunter: s.hunter, won: !!(s.won && won > 0), amount: won, steps: s.final ? s.final.score : 0, hs: s.final ? s.final.hs : 0,
+      who: mine.map((p) => ({ c: p.char, r: p.result, t: p.take, o: p.offer, cash: p.cash })) });
+    Stats.best("pot", won); if (s.final) Stats.best("steps", s.final.score);
+    mine.filter((p) => p.result === "home" && p.take === "high").forEach((p) => Stats.best("offer", p.offer));
     setTimeout(unlockCheck, 1500);
   }
 
@@ -775,6 +841,7 @@ const UI = (() => {
       else if (g === "online") onlineScreen();
       else if (g === "pub") { screen = "pub"; Pub.open(); }
       else if (g === "roster") roster();
+      else if (g === "career") career();
       return;
     }
     if (t.dataset.send) { Sfx.tap(); send(t.dataset.send, t.dataset.v == null ? null : t.dataset.send === "take" ? t.dataset.v : +t.dataset.v); return; }

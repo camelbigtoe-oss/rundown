@@ -142,6 +142,7 @@ const Pub = (() => {
     st.xp ||= [];
     if (st.xp[i] || !st.marks[i]) return;
     st.xp[i] = 1;
+    st.ids[i].forEach((id, k) => Stats.answer(itemById(id).c, !!st.marks[i][k]));
     const ups = [];
     st.ids[i].forEach((id, k) => {
       if (!st.marks[i][k]) return;
@@ -238,7 +239,7 @@ const Pub = (() => {
         const g = ($("#pd").value || "").trim(); if (!g) return;
         const P = ponderFor(st.week);
         st.ponder.tried[st.round] = true; st.ponder.guesses[st.round] = g;
-        if (Bank.matches(g, { a: P.a, x: P.x, c: "ponder" })) { st.ponder.solved = st.round + 1; UI.shout("SOLVED!", "safe"); }
+        if (Bank.matches(g, { a: P.a, x: P.x, c: "ponder" })) { st.ponder.solved = st.round + 1; Stats.bump("ponder"); UI.shout("SOLVED!", "safe"); }
         else Sfx.wrong();
         save(); mark(); break;
       }
