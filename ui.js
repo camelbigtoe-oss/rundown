@@ -43,7 +43,7 @@ const UI = (() => {
     return L[n % L.length].replace("{p}", cur ? cur.name : "").replace("{h}", s ? HUNTERS[s.hunter].name : "");
   }
   function hostSays(text, fresh) {
-    return `<div class="host-strip">${spr("host", "mid bob")}<div class="bubble left ${fresh ? "pop" : ""}"><small>GAZ</small>${esc(text)}</div></div>`;
+    return `<div class="host-strip">${spr("host", "mid bob")}<div class="bubble left ${fresh ? "pop" : ""}"><small>Gaz</small>${esc(text)}</div></div>`;
   }
 
   // ---------- title ----------
@@ -51,46 +51,40 @@ const UI = (() => {
   function title() {
     screen = "title"; stopOnline(); endLocal();
     const rec = LS("rd.rec", { games: 0, wins: 0, total: 0, best: 0 });
-    const ticker = ["TONIGHT ON THE RUNDOWN", `${Bank.all.length} QUESTIONS`, "4 HUNTERS", "ONE WAY HOME", "TUESDAY QUIZ AT PHAT EDDIE'S", "PASS THE PHONE OR PLAY ONLINE", "STARRING CONNOR"].join("  ✦  ");
     let hi = 0, li = 0;
     show(`
       <section class="title-screen">
-        <div class="onair"><i></i>ON AIR</div>
-        <div class="marquee">
-          <div class="logo"><span class="l1">THE</span><span class="l2">RUNDOWN</span></div>
-          <div class="tagline">A quiz show. A hunter. One way home.</div>
-        </div>
-        <div class="ticker"><div><span>${ticker}  ✦  </span><span>${ticker}  ✦  </span></div></div>
+        <div class="masthead"><span>A quiz show</span><span>Ep. ${String(rec.games + 1).padStart(3, "0")}</span></div>
+        <h1 class="wordmark">THE<br>RUN<br><i>DOWN</i></h1>
+        <p class="tagline">One hunter. One way home.</p>
         <div class="title-stage">
-          <div class="cast-slot">${spr("connor", "big bob")}<span>CONNOR</span></div>
+          <div class="cast-slot">${spr("connor", "big bob")}<span>Connor</span></div>
           <div class="cast-slot host">
-            <div class="bubble pop" id="t-line"><small>GAZ</small>${esc(HOST.lines.welcome[0])}</div>
-            ${spr("host", "big bob d2")}<span>YOUR HOST</span>
+            <div class="bubble pop" id="t-line"><small>Gaz</small>${esc(HOST.lines.welcome[0])}</div>
+            ${spr("host", "big bob d2")}<span>Host</span>
           </div>
-          <div class="cast-slot hunter" id="t-hunter">${spr(HUNTER_ORDER[0], "big bob flip")}<span style="color:${HUNTERS[HUNTER_ORDER[0]].color}">${esc(HUNTERS[HUNTER_ORDER[0]].short.toUpperCase())}</span></div>
-          <div class="podium"></div>
+          <div class="cast-slot hunter" id="t-hunter">${spr(HUNTER_ORDER[0], "big bob flip")}<span>${esc(HUNTERS[HUNTER_ORDER[0]].short)}</span></div>
         </div>
         <nav class="menu">
-          <button class="btn big gold" data-go="solo"><b>SOLO RUN</b><small>You against a hunter</small></button>
-          <button class="btn big teal" data-go="team"><b>TEAM · ONE PHONE</b><small>2 to 4 players, pass it round</small></button>
-          <button class="btn big purple" data-go="online"><b>TEAM · ONLINE</b><small>Everyone on their own phone</small></button>
-          <button class="btn big amber" data-go="pub"><b>TUESDAY QUIZ</b><small>Quiz night at Phat Eddie's</small></button>
+          <button class="menu-row" data-go="solo"><em>01</em><b>Solo run</b><small>You against a hunter</small><i>→</i></button>
+          <button class="menu-row" data-go="team"><em>02</em><b>Team, one phone</b><small>2 to 4 players, pass it round</small><i>→</i></button>
+          <button class="menu-row" data-go="online"><em>03</em><b>Team online</b><small>Everyone on their own phone</small><i>→</i></button>
+          <button class="menu-row" data-go="pub"><em>04</em><b>Tuesday quiz</b><small>Quiz night at Phat Eddie's</small><i>→</i></button>
         </nav>
         <div class="scoreboard-led">
-          <div><small>GAMES</small><b>${rec.games}</b></div>
-          <div><small>WON</small><b>${money(rec.total)}</b></div>
-          <div><small>BEST</small><b>${money(rec.best)}</b></div>
+          <div><small>Games</small><b>${rec.games}</b></div>
+          <div><small>Won</small><b>${money(rec.total)}</b></div>
+          <div><small>Best</small><b>${money(rec.best)}</b></div>
         </div>
-        <div class="title-foot"><button class="link" data-act="sound">${Sfx.on ? "Sound on" : "Sound off"}</button></div>
-        <div class="made-for">made for Connor</div>
+        <div class="title-foot"><span class="made-for">Made for Connor</span><button class="link" data-act="sound">${Sfx.on ? "Sound on" : "Sound off"}</button></div>
       </section>`);
     clearInterval(titleTimer);
     titleTimer = setInterval(() => {
       if (screen !== "title") return clearInterval(titleTimer);
       hi = (hi + 1) % HUNTER_ORDER.length; li = (li + 1) % HOST.lines.welcome.length;
       const h = HUNTER_ORDER[hi], el = $("#t-hunter"), ln = $("#t-line");
-      if (el) { el.innerHTML = `${spr(h, "big bob flip")}<span style="color:${HUNTERS[h].color}">${esc(HUNTERS[h].short.toUpperCase())}</span>`; el.classList.remove("swap"); void el.offsetWidth; el.classList.add("swap"); }
-      if (ln) { ln.innerHTML = `<small>GAZ</small>${esc(HOST.lines.welcome[li])}`; ln.classList.remove("pop"); void ln.offsetWidth; ln.classList.add("pop"); }
+      if (el) { el.innerHTML = `${spr(h, "big bob flip")}<span>${esc(HUNTERS[h].short)}</span>`; el.classList.remove("swap"); void el.offsetWidth; el.classList.add("swap"); }
+      if (ln) { ln.innerHTML = `<small>Gaz</small>${esc(HOST.lines.welcome[li])}`; ln.classList.remove("pop"); void ln.offsetWidth; ln.classList.add("pop"); }
     }, 3500);
   }
 
@@ -339,7 +333,6 @@ const UI = (() => {
     }
     const tag = role === "local" ? (s.mode === "solo" ? "SOLO RUN" : "TEAM") : `ROOM ${esc(s.code || "")}`;
     show(bar(tag) + body, mood);
-    if (s.phase === "end" && s.won && fresh) confetti();
   }
 
   function hostSkip(s) {

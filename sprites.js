@@ -11,7 +11,9 @@ const Sprites = (() => {
   };
   const cache = new Map();
 
+  let K = 1; // shading strength; draw() turns it down for a flatter look
   function shade(hex, amt) {
+    amt *= K;
     const n = parseInt(hex.slice(1), 16);
     let r = n >> 16, g = (n >> 8) & 255, b = n & 255;
     const f = (c) => Math.max(0, Math.min(255, Math.round(amt < 0 ? c * (1 + amt) : c + (255 - c) * amt)));
@@ -20,6 +22,10 @@ const Sprites = (() => {
   }
 
   function draw(ctx, s) {
+    K = 0.5;
+    try { paint(ctx, s); } finally { K = 1; }
+  }
+  function paint(ctx, s) {
     ctx.clearRect(0, 0, W, H);
     const P = (c, x, y, w = 1, h = 1) => { if (!c) return; ctx.fillStyle = c; ctx.fillRect(x, y, w, h); };
     const b = BUILDS[s.build || "avg"];
@@ -34,7 +40,7 @@ const Sprites = (() => {
     const longSleeve = ["hoodie", "cardigan", "suit", "jumper", "coat", "blazer", "denim", "cloak", "gown"].includes(t.style);
 
     // floor shadow
-    P("rgba(0,0,0,.35)", L - 3, 46, b.tw + 6, 2);
+    P("rgba(0,0,0,.25)", L - 2, 46, b.tw + 4, 1);
 
     // hair that falls behind the body
     if (longHair) { P(hs, 8, 6, 16, 17); P(hc, 8, 6, 2, 16); }
@@ -191,7 +197,7 @@ const Sprites = (() => {
     P("#fff", 12, 9, 2, 2); P("#fff", 18, 9, 2, 2); P(eye, 13, 9, 1, 2); P(eye, 18, 9, 1, 2);
     if (s.lashes) { P("#2a1a22", 11, 8, 1, 1); P("#2a1a22", 20, 8, 1, 1); P("#2a1a22", 12, 8, 2, 1); P("#2a1a22", 18, 8, 2, 1); }
     P(sks, 15, 11, 2, 1);
-    if (s.blush) { P("rgba(255,110,140,.55)", 11, 11, 2, 1); P("rgba(255,110,140,.55)", 19, 11, 2, 1); }
+    if (s.blush) { P("rgba(255,110,140,.3)", 11, 11, 2, 1); P("rgba(255,110,140,.3)", 19, 11, 2, 1); }
     const mc = "#7a2a35";
     switch (s.mouth) {
       case "grin": P(mc, 13, 12, 6, 2); P("#fff", 14, 12, 4, 1); P("#e66a7a", 15, 13, 2, 1); break;
