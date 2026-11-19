@@ -14,7 +14,7 @@ const Engine = (() => {
       this.H = HUNTERS[cfg.hunter];
       this.s = {
         v: 0, phase: "intro", hunter: cfg.hunter, mode: cfg.mode, host: cfg.host || null, code: cfg.code || null,
-        players: cfg.players.map((p) => ({ id: p.id, name: p.name, char: p.char, cash: 0, offer: 0, take: null, result: null, won: 0 })),
+        players: cfg.players.map((p) => ({ id: p.id, name: p.name, char: p.char, stats: p.stats || null, cash: 0, offer: 0, take: null, result: null, won: 0 })),
         turn: 0, line: this.say("intro"), pot: 0, now: Date.now(),
       };
       this.loop = setInterval(() => this.tick(), 150);
@@ -25,7 +25,20 @@ const Engine = (() => {
     emit() { this.s.v++; this.s.now = Date.now(); this.onChange(this.s); }
     later(ms, fn) { const id = setTimeout(() => { this.timers = this.timers.filter((x) => x !== id); fn(); }, ms); this.timers.push(id); }
     destroy() { clearInterval(this.loop); this.timers.forEach(clearTimeout); this.timers = []; }
-    q(n) { const q = Bank.next(n, this.avoid); this.ans = q.ans; return { id: q.id, c: q.c, q: q.q, opts: q.opts }; }
+    // a strong subject sometimes crosses off one wrong answer (the "hunch")
+    q(n, stats) {
+      const q = Bank.next(n, this.avoid); this.ans = q.ans;
+      let strike = null;
+      if (stats) {
+        const v = stats[q.c === "flag" ? "geo" : q.c] || 0;
+        if (Math.random() < v / (n === 3 ? 700 : 500)) { const w = [...Array(n).keys()].filter((i) => i !== q.ans); strike = w[Math.floor(Math.random() * w.length)]; }
+      }
+      return { id: q.id, c: q.c, q: q.q, opts: q.opts, strike };
+    }
+    teamStats() {
+      const home = this.s.players.filter((p) => p.result === "home" && p.stats); if (!home.length) return null;
+      const out = {}; for (const k of Object.keys(home[0].stats)) out[k] = Math.max(...home.map((p) => p.stats[k] || 0)); return out;
+    }
 
     // who may do what (pid null = everyone on this one device)
     can(pid, act) {
@@ -64,14 +77,14 @@ const Engine = (() => {
     // ---- cash builder ----
     startCash() {
       this.s.phase = "cash";
-      this.s.cash = { end: Date.now() + CASH_TIME, score: 0, fb: null, ...this.q(4) };
+      this.s.cash = { end: Date.now() + CASH_TIME, score: 0, fb: null, ...this.q(4, this.cur().stats) };
       this.emit();
     }
     cashAns(i) {
       const c = this.s.cash; if (this.s.phase !== "cash") return;
       const ok = i === this.ans; if (ok) c.score++;
-      c.fb = { k: ++this.fbk, ok, a: c.opts[this.ans], q: c.q };
-      Object.assign(c, this.q(4)); this.emit();
+      c.fb = { k: ++this.fbk, ok, a: c.opts[this.ans], q: c.q, c: c.c };
+      Object.assign(c, this.q(4, this.cur().stats)); this.emit();
     }
     toOffer() {
       const p = this.cur(), base = this.s.cash.score * STEP, T = this.H.tier;
@@ -92,7 +105,7 @@ const Engine = (() => {
     // ---- head-to-head board ----
     boardNext() {
       const b = this.s.board;
-      Object.assign(b, this.q(3), { step: "ask", pick: null, hp: null, ans: null, k: b.k + 1 });
+      Object.assign(b, this.q(3, this.cur().stats), { step: "ask", pick: null, hp: null, ans: null, k: b.k + 1 });
       this.s.line = ""; this.emit();
     }
     boardAns(i) {
@@ -132,7 +145,7 @@ const Engine = (() => {
     // ---- final chase: the team's run ----
     startFinalP() {
       const f = this.s.final;
-      Object.assign(f, { end: Date.now() + FINAL_TIME, lock: 0, fb: null, cur: this.q(4) });
+      Object.assign(f, { end: Date.now() + FINAL_TIME, lock: 0, fb: null, cur: this.q(4, this.teamStats()) });
       this.s.phase = "finalP"; this.emit();
     }
     finalAns(pid, i) {
@@ -141,8 +154,8 @@ const Engine = (() => {
         if (now < f.lock) return;
         const ok = i === this.ans;
         if (ok) f.score++; else f.lock = now + LOCK_TIME;
-        f.fb = { k: ++this.fbk, ok, a: f.cur.opts[this.ans], who: pid };
-        f.cur = this.q(4); this.emit();
+        f.fb = { k: ++this.fbk, ok, a: f.cur.opts[this.ans], who: pid, c: f.cur.c };
+        f.cur = this.q(4, this.teamStats()); this.emit();
       } else if (s.phase === "finalH" && f.push && !f.push.done) {
         const ok = i === f.push.ans;
         Object.assign(f.push, { done: true, ok, pick: i, who: pid });

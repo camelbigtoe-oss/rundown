@@ -172,3 +172,54 @@ const HOST = {
     lose: ["Oh, so close. So, so close.", "Ahh. The hunter wins tonight. Chin up!", "Gutted. Absolutely gutted for you."],
   },
 };
+
+// ---------- Team Discovery Channel and the RPG layer ----------
+// Stats run 1-255 in each category. Looks for Zach, Jackie and Jeremy are placeholders until we get descriptions.
+Object.assign(CHARS, {
+  jackie: {
+    name: "Jackie", tag: "Mum. All-round ace.",
+    spec: {
+      build: "avg", skin: "#efc6a8", hair: "#a8602f", hairStyle: "bob", mouth: "smile", glasses: "#6a2f4f", earring: "#ffd166", blush: 1, lashes: 1, eye: "#3a5a3a",
+      top: { style: "cardigan", color: "#2f7f7a", inner: "#f4ead6", button: "#ffd166" }, bottom: { style: "pants", color: "#2a2a3a" },
+      shoes: { style: "low", color: "#4a2a1a", sole: "#2a1408" },
+    },
+  },
+  zach: {
+    name: "Zach", tag: "Knows every map by heart",
+    spec: {
+      build: "avg", skin: "#e9b996", hair: "#5a3a22", hairStyle: "volume", mouth: "smirk", cap: "#23345e", eye: "#3a2a1a",
+      top: { style: "tee", color: "#3a7ca5", graphic: "globe" }, bottom: { style: "shorts", color: "#b8a37a" },
+      shoes: { style: "low", color: "#e8e8e8", accent: "#23345e", sole: "#cfcfcf" },
+    },
+  },
+  jeremy: {
+    name: "Jeremy", tag: "Down from Wellington. Sport nut.",
+    spec: {
+      build: "avg", strong: 1, skin: "#f0c09a", hair: "#c9a25a", hairStyle: "short", beard: "stubble", mouth: "grin", eye: "#2a4a6a",
+      top: { style: "jersey", color: "#f2c230", trim: "#141414", graphic: "stripe", stripe: "#141414" }, bottom: { style: "shorts", color: "#141414" },
+      socks: { color: "#141414", stripe: "#f2c230", knee: false }, shoes: { style: "low", color: "#141414", accent: "#f2c230", sole: "#e9e9e9" },
+    },
+  },
+});
+CHARS.connor.tag = "Quiz master. Team captain.";
+CHAR_ORDER.splice(0, CHAR_ORDER.length, "connor", "jackie", "zach", "jeremy", "mel", "aroha", "steve", "priya", "june", "tama", "jess");
+
+const TEAM = { name: "Team Discovery Channel", captain: "connor", members: ["connor", "jackie", "zach", "jeremy"] };
+
+// starting level and stats; levels and stats then grow with play (see rpg.js)
+const BASE = (() => {
+  const S = (all, o = {}) => ({ gk: all, nz: all, geo: all, sci: all, sport: all, ent: all, hist: all, ...o });
+  return {
+    connor: { lv: 50, stats: S(210) },
+    jackie: { lv: 42, stats: S(175, { gk: 185, nz: 180, hist: 182, ent: 178, sport: 160 }) },
+    zach: { lv: 24, stats: S(105, { geo: 205, gk: 122, hist: 115 }) },
+    jeremy: { lv: 24, stats: S(100, { sport: 205, nz: 150, gk: 115, ent: 110 }) },
+    mel: { lv: 15, stats: S(110, { ent: 135 }) },
+    aroha: { lv: 18, stats: S(100, { nz: 175, hist: 140 }) },
+    steve: { lv: 12, stats: S(82, { sport: 170, gk: 95 }) },
+    priya: { lv: 20, stats: S(110, { sci: 195, geo: 125 }) },
+    june: { lv: 30, stats: S(115, { gk: 160, hist: 165, ent: 130 }) },
+    tama: { lv: 16, stats: S(90, { sport: 160, nz: 145 }) },
+    jess: { lv: 16, stats: S(95, { ent: 190 }) },
+  };
+})();

@@ -26,6 +26,46 @@ const UI = (() => {
     const c = CHARS[id] || HUNTERS[id] || (id === "host" ? HOST : null); if (!c) return "";
     return `<img class="spr ${cls}" src="${Sprites.url(id, c.spec)}" alt="${esc(c.name)}" draggable="false">`;
   }
+  function portrait(id, cls = "") {
+    const c = CHARS[id] || HUNTERS[id] || (id === "host" ? HOST : null); if (!c) return "";
+    return `<img class="pt ${cls}" src="${Portraits.url(id, c.spec)}" alt="${esc(c.name)}" draggable="false">`;
+  }
+  // visual-novel dialogue box: portrait, name plate, typed-out line
+  function vn(id, name, text, fresh, cls = "") {
+    if (!text) return "";
+    return `<div class="vn ${cls} ${fresh ? "pop" : ""}"><div class="vn-face">${portrait(id)}</div>
+      <div class="vn-body"><div class="vn-name">${esc(name)}</div><p class="vn-text" data-type>${esc(text)}</p></div><i class="vn-next">▼</i></div>`;
+  }
+  const typed = new Set();
+  function typeIn() {
+    for (const el of $$("[data-type]")) {
+      const full = el.textContent;
+      if (typed.has(full)) continue;
+      typed.add(full); if (typed.size > 80) typed.clear();
+      el.textContent = ""; let i = 0;
+      const box = el.closest(".vn"); if (box) box.classList.add("typing");
+      const step = () => {
+        if (!el.isConnected) return;
+        i = Math.min(full.length, i + 2); el.textContent = full.slice(0, i);
+        if (i % 6 === 0) Sfx.blip();
+        if (i < full.length) el._t = setTimeout(step, 24); else if (box) box.classList.remove("typing");
+      };
+      if (box) box.addEventListener("click", () => { clearTimeout(el._t); el.textContent = full; box.classList.remove("typing"); }, { once: true });
+      step();
+    }
+  }
+  // big anime shout across the screen
+  function shout(text, cls = "") {
+    const d = document.createElement("div"); d.className = "shout " + cls;
+    d.innerHTML = `<div class="shout-lines"></div><span>${esc(text)}</span>`;
+    document.body.appendChild(d); Sfx.shout();
+    setTimeout(() => d.remove(), 1300);
+  }
+  function statBars(id, small) {
+    const r = RPG.get(id); if (!r) return "";
+    return `<div class="statgrid ${small ? "small" : ""}">${RPG.CATS.map((k) => `<div class="st"><span>${RPG.SHORT[k]}</span><div class="sbar"><i style="width:${(r.stats[k] / RPG.MAX) * 100}%"></i></div><b>${r.stats[k]}</b></div>`).join("")}</div>`;
+  }
+  function levelUp(up) { if (!up) return; shout("LEVEL UP!", "lvl"); toast(`${CHARS[up.id].name} reached Lv ${up.lv}!`, 2400); }
   function stars(n) { return `<span class="stars" aria-label="${n} of 4">${"★".repeat(n)}<i>${"★".repeat(4 - n)}</i></span>`; }
   function toast(msg, ms = 1600) { const t = $("#toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("on"), ms); }
   function bar(title = "") {
@@ -35,57 +75,83 @@ const UI = (() => {
       <button class="icon" data-act="sound" aria-label="Sound">${Sfx.on ? "♪" : "×"}</button>
     </header>`;
   }
-  function show(html, mood = "blue") { if (screen !== "title") clearInterval(titleTimer); app.innerHTML = html; Studio.set(mood); app.scrollTop = 0; }
+  function show(html, mood = "blue") { if (screen !== "title") clearInterval(titleTimer); app.innerHTML = html; Studio.set(mood); app.scrollTop = 0; typeIn(); }
   // the host's patter: same line for the same moment, so re-renders don't flicker
   function hostLine(kind, s, seed = 0) {
     const L = HOST.lines[kind], cur = s && s.players[s.turn];
     const n = (s ? s.turn * 7 + (s.players.length * 3) + (s.code ? s.code.charCodeAt(0) : 0) : 0) + seed;
     return L[n % L.length].replace("{p}", cur ? cur.name : "").replace("{h}", s ? HUNTERS[s.hunter].name : "");
   }
-  function hostSays(text, fresh) {
-    return `<div class="host-strip">${spr("host", "mid bob")}<div class="bubble left ${fresh ? "pop" : ""}"><small>Gaz</small>${esc(text)}</div></div>`;
-  }
+  function hostSays(text, fresh) { return vn("host", "GAZ", text, fresh, "host"); }
 
   // ---------- title ----------
   let titleTimer = null;
   function title() {
     screen = "title"; stopOnline(); endLocal();
     const rec = LS("rd.rec", { games: 0, wins: 0, total: 0, best: 0 });
+    const cap = RPG.get("connor");
     let hi = 0, li = 0;
+    const hunterFig = (h) => `${portrait(h, "pt-l")}<figcaption>${esc(HUNTERS[h].short)}<small>${"★".repeat(HUNTERS[h].stars)}</small></figcaption>`;
     show(`
       <section class="title-screen">
-        <div class="masthead"><span>A quiz show</span><span>Ep. ${String(rec.games + 1).padStart(3, "0")}</span></div>
-        <h1 class="wordmark">THE<br>RUN<br><i>DOWN</i></h1>
-        <p class="tagline">One hunter. One way home.</p>
-        <div class="title-stage">
-          <div class="cast-slot">${spr("connor", "big bob")}<span>Connor</span></div>
-          <div class="cast-slot host">
-            <div class="bubble pop" id="t-line"><small>Gaz</small>${esc(HOST.lines.welcome[0])}</div>
-            ${spr("host", "big bob d2")}<span>Host</span>
-          </div>
-          <div class="cast-slot hunter" id="t-hunter">${spr(HUNTER_ORDER[0], "big bob flip")}<span>${esc(HUNTERS[HUNTER_ORDER[0]].short)}</span></div>
+        <div class="ep-card"><span>EPISODE ${String(rec.games + 1).padStart(2, "0")}</span><span>TONIGHT</span></div>
+        <div class="logo-wrap">
+          <div class="kana">ザ・ランダウン</div>
+          <h1 class="logo">THE<br>RUNDOWN</h1>
+          <div class="logo-sub">One hunter. One way home.</div>
         </div>
-        <nav class="menu">
-          <button class="menu-row" data-go="solo"><em>01</em><b>Solo run</b><small>You against a hunter</small><i>→</i></button>
-          <button class="menu-row" data-go="team"><em>02</em><b>Team, one phone</b><small>2 to 4 players, pass it round</small><i>→</i></button>
-          <button class="menu-row" data-go="online"><em>03</em><b>Team online</b><small>Everyone on their own phone</small><i>→</i></button>
-          <button class="menu-row" data-go="pub"><em>04</em><b>Tuesday quiz</b><small>Quiz night at Phat Eddie's</small><i>→</i></button>
+        <div class="cast-row">
+          <figure class="cast">${portrait("connor", "pt-l")}<figcaption>Connor<small>Lv ${cap.lv}</small></figcaption></figure>
+          <figure class="cast host">${portrait("host", "pt-l")}<figcaption>Gaz<small>Host</small></figcaption></figure>
+          <figure class="cast hunter" id="t-hunter">${hunterFig(HUNTER_ORDER[0])}</figure>
+        </div>
+        <div id="t-line">${vn("host", "GAZ", HOST.lines.welcome[0], true, "host")}</div>
+        <nav class="menu win">
+          <button class="choice" data-go="solo"><b>Solo run</b><small>You against a hunter</small></button>
+          <button class="choice" data-go="team"><b>Team, one phone</b><small>2 to 4 players, pass it round</small></button>
+          <button class="choice" data-go="online"><b>Team online</b><small>Everyone on their own phone</small></button>
+          <button class="choice" data-go="pub"><b>Tuesday quiz</b><small>Quiz night at Phat Eddie's</small></button>
+          <button class="choice" data-go="roster"><b>${esc(TEAM.name)}</b><small>Levels and stats</small></button>
         </nav>
-        <div class="scoreboard-led">
+        <div class="records win">
           <div><small>Games</small><b>${rec.games}</b></div>
           <div><small>Won</small><b>${money(rec.total)}</b></div>
           <div><small>Best</small><b>${money(rec.best)}</b></div>
         </div>
-        <div class="title-foot"><span class="made-for">Made for Connor</span><button class="link" data-act="sound">${Sfx.on ? "Sound on" : "Sound off"}</button></div>
+        <div class="title-foot"><span>Made for Connor</span><button class="link" data-act="sound">${Sfx.on ? "Sound on" : "Sound off"}</button></div>
       </section>`);
     clearInterval(titleTimer);
     titleTimer = setInterval(() => {
       if (screen !== "title") return clearInterval(titleTimer);
       hi = (hi + 1) % HUNTER_ORDER.length; li = (li + 1) % HOST.lines.welcome.length;
-      const h = HUNTER_ORDER[hi], el = $("#t-hunter"), ln = $("#t-line");
-      if (el) { el.innerHTML = `${spr(h, "big bob flip")}<span>${esc(HUNTERS[h].short)}</span>`; el.classList.remove("swap"); void el.offsetWidth; el.classList.add("swap"); }
-      if (ln) { ln.innerHTML = `<small>Gaz</small>${esc(HOST.lines.welcome[li])}`; ln.classList.remove("pop"); void ln.offsetWidth; ln.classList.add("pop"); }
-    }, 3500);
+      const el = $("#t-hunter"), ln = $("#t-line");
+      if (el) { el.innerHTML = hunterFig(HUNTER_ORDER[hi]); el.classList.remove("swap"); void el.offsetWidth; el.classList.add("swap"); }
+      if (ln) { ln.innerHTML = vn("host", "GAZ", HOST.lines.welcome[li], true, "host"); typeIn(); }
+    }, 5000);
+  }
+
+  // ---------- team roster with levels and stats ----------
+  function roster() {
+    screen = "roster";
+    const card = (id) => {
+      const r = RPG.get(id), c = CHARS[id], pct = Math.min(100, (r.xp / RPG.need(r.lv)) * 100);
+      return `<div class="char-card win ${id === TEAM.captain ? "captain" : ""}">
+        <div class="cc-top">${portrait(id, "pt-l")}
+          <div class="cc-id"><b>${esc(c.name)}</b><small>${esc(c.tag)}</small>
+            <div class="lv"><span>Lv ${r.lv}</span>${id === TEAM.captain ? `<em>QUIZ MASTER</em>` : `<em>Best: ${RPG.SHORT[RPG.best(id)]}</em>`}</div>
+            <div class="xp" title="XP to next level"><i style="width:${pct}%"></i></div>
+          </div>
+        </div>
+        ${statBars(id)}
+      </div>`;
+    };
+    show(`${bar("THE TEAM")}
+      <section class="roster">
+        <div class="team-head win"><small>Quiz team</small><b>${esc(TEAM.name)}</b><span>Stats run 1 to 255 and grow as you answer questions in that subject. Every right answer earns XP.</span></div>
+        ${TEAM.members.map(card).join("")}
+        <h2 class="h">Other contestants</h2>
+        ${CHAR_ORDER.filter((i) => !TEAM.members.includes(i)).map(card).join("")}
+      </section>`);
   }
 
   // ---------- setup: pick players and a hunter ----------
@@ -128,7 +194,8 @@ const UI = (() => {
       <div class="slot-mid">
         <div class="slot-spr">${spr(p.char, "bob")}</div>
         <input class="name" data-i="${i}" maxlength="14" value="${esc(p.name)}" aria-label="Player name">
-        <div class="slot-tag">${esc(c.tag)}</div>
+        <div class="slot-tag">${esc(c.tag)} · <b>Lv ${RPG.get(p.char).lv}</b></div>
+        ${statBars(p.char, true)}
       </div>
       <button class="arrow" data-act="next" data-i="${i}" aria-label="Next character">▸</button>
     </div>`;
@@ -149,7 +216,7 @@ const UI = (() => {
     SAVE("rd.hunter", s.hunter);
     role = "local"; endLocal();
     lastKey = ""; lastState = null; skew = 0;
-    game = new Engine.Game({ mode: s.mode, hunter: s.hunter, players: s.players.map((p) => ({ id: uid(), name: p.name, char: p.char })) }, onState);
+    game = new Engine.Game({ mode: s.mode, hunter: s.hunter, players: s.players.map((p) => ({ id: uid(), name: p.name, char: p.char, stats: RPG.stats(p.char) })) }, onState);
   }
   function endLocal() { if (game) { game.destroy(); game = null; } }
   function onState(s) {
@@ -186,7 +253,7 @@ const UI = (() => {
     const H = HUNTERS[s.hunter], cur = s.players[s.turn];
     const mood = ["finalH", "finalHIntro"].includes(s.phase) || (s.phase === "board" && s.board.h >= s.board.p - 1) ? "red" : s.phase === "end" && s.won ? "gold" : "blue";
     let body = "";
-    const bubble = (txt) => txt ? `<div class="bubble ${fresh ? "pop" : ""}">${esc(txt)}</div>` : "";
+    const bubble = (txt) => vn(s.hunter, H.name, txt, fresh, "hunter");
     const goBtn = (label, cls = "gold") => canAct(s, "go") ? `<button class="btn big ${cls}" data-send="go"><b>${label}</b></button>` : `<div class="waiting">Waiting for ${role === "guest" && s.phase === "turnIntro" ? esc(cur.name) : "the host"}…</div>`;
     const youAre = (p) => role !== "local" && p && p.id === me.id;
 
@@ -228,7 +295,7 @@ const UI = (() => {
           </div>
           <div class="timebar"><i data-bar="${c.end}" data-len="${Engine.CASH_TIME}"></i></div>
           ${qcard(c, fresh)}
-          <div class="opts four">${c.opts.map((o, i) => `<button class="opt" data-send="cash" data-v="${i}" ${mine ? "" : "disabled"}><em>${LETTERS[i]}</em>${esc(o)}</button>`).join("")}</div>
+          <div class="opts four">${c.opts.map((o, i) => optBtn("cash", o, i, mine, c.strike, cur.name)).join("")}</div>
           ${c.fb ? `<div class="fb ${c.fb.ok ? "ok" : "no"}" data-k="${c.fb.k}">${c.fb.ok ? "✓ RIGHT" : `✗ It was <b>${esc(c.fb.a)}</b>`}</div>` : ""}
           ${mine ? "" : `<div class="watch">${esc(cur.name)} is playing</div>`}
           ${hostSkip(s)}
@@ -240,7 +307,7 @@ const UI = (() => {
         const card = (k, label, steps, cls) => `<button class="offer ${cls}" data-send="take" data-v="${k}" ${mine ? "" : "disabled"}>
           <small>${label}</small><b>${money(o[k])}</b><span>${steps} steps to get home</span></button>`;
         body = `<section class="stage ${fresh ? "enter" : ""}">
-          <div class="offer-top">${spr(s.hunter, "big bob")}${bubble(s.line)}</div>
+          ${bubble(s.line)}
           <p class="center">${esc(cur.name)} banked <b class="gold-t">${money(cur.cash)}</b>. Pick where you start.</p>
           <div class="offers">
             ${card("high", "HIGH ROAD", 8 - 2, "high")}
@@ -292,7 +359,7 @@ const UI = (() => {
           </div>
           <div class="timebar"><i data-bar="${f.end}" data-len="${Engine.FINAL_TIME}"></i></div>
           ${qcard(f.cur, fresh)}
-          <div class="opts four ${locked ? "locked" : ""}" ${locked ? `data-lock="${f.lock}"` : ""}>${f.cur.opts.map((o, i) => `<button class="opt" data-send="final" data-v="${i}" ${mine ? "" : "disabled"}><em>${LETTERS[i]}</em>${esc(o)}</button>`).join("")}</div>
+          <div class="opts four ${locked ? "locked" : ""}" ${locked ? `data-lock="${f.lock}"` : ""}>${f.cur.opts.map((o, i) => optBtn("final", o, i, mine, f.cur.strike, "Team")).join("")}</div>
           ${f.fb ? `<div class="fb ${f.fb.ok ? "ok" : "no"}" data-k="${f.fb.k}">${f.fb.ok ? "✓ STEP!" : `✗ It was <b>${esc(f.fb.a)}</b>`}</div>` : ""}
           ${mine ? "" : `<div class="watch">The team is running</div>`}
         </section>`;
@@ -340,6 +407,10 @@ const UI = (() => {
     const cur = s.players[s.turn]; if (!cur || cur.id === me.id) return "";
     return `<button class="link skip" data-send="skip">Skip ${esc(cur.name)} (dropped out?)</button>`;
   }
+  function optBtn(act, o, i, mine, strike, who) {
+    const struck = strike === i;
+    return `<button class="opt ${struck ? "struck" : ""}" data-send="${act}" data-v="${i}" ${mine && !struck ? "" : "disabled"}><em>${LETTERS[i]}</em><span class="ot">${esc(o)}</span>${struck ? `<span class="hunch">${esc(who)}'s hunch: not this</span>` : ""}</button>`;
+  }
   function qcard(q, fresh) {
     return `<div class="qcard ${fresh ? "flip" : ""}"><div class="qcat">${esc(Bank.CATS[q.c] || "")}</div><p>${esc(q.q)}</p></div>`;
   }
@@ -360,6 +431,7 @@ const UI = (() => {
     const optCls = (i) => {
       const c = ["opt"];
       if (b.pick === i) c.push("picked");
+      if (b.strike === i) c.push("struck");
       if (rev) { if (i === b.ans) c.push("right"); else if (b.pick === i) c.push("wrong"); }
       return c.join(" ");
     };
@@ -367,8 +439,8 @@ const UI = (() => {
       <div class="board">${rows.join("")}</div>
       <div class="board-side">
         ${qcard(b, fresh)}
-        <div class="opts three">${b.opts.map((o, i) => `<button class="${optCls(i)}" data-send="board" data-v="${i}" ${mine && st === "ask" ? "" : "disabled"}>
-          <em>${LETTERS[i]}</em>${esc(o)}${rev && b.hp === i ? `<span class="htag">${esc(HUNTERS[s.hunter].short)}</span>` : ""}${rev && b.pick === i ? `<span class="ptag">${esc(cur.name)}</span>` : ""}</button>`).join("")}</div>
+        <div class="opts three">${b.opts.map((o, i) => `<button class="${optCls(i)}" data-send="board" data-v="${i}" ${mine && st === "ask" && b.strike !== i ? "" : "disabled"}>
+          <em>${LETTERS[i]}</em><span class="ot">${esc(o)}</span>${b.strike === i && !rev ? `<span class="hunch">${esc(cur.name)}'s hunch: not this</span>` : ""}${rev && b.hp === i ? `<span class="htag">${esc(HUNTERS[s.hunter].short)}</span>` : ""}${rev && b.pick === i ? `<span class="ptag">${esc(cur.name)}</span>` : ""}</button>`).join("")}</div>
         <div class="board-msg">${st === "lock" ? `<span class="thinking">${esc(HUNTERS[s.hunter].short)} is locking in<i>.</i><i>.</i><i>.</i></span>` : st === "ask" ? (mine ? "Pick your answer" : `${esc(cur.name)} is thinking…`) : ""}</div>
         ${rev ? bubble(s.line) : ""}
       </div>
@@ -411,7 +483,7 @@ const UI = (() => {
         <div class="track-hunter" style="left:${pct}%">${spr(s.hunter, "tiny")}</div>
         <div class="track-team">${s.players.filter((p) => p.result === "home").map((p) => spr(p.char, "tiny")).join("")}</div>
       </div>
-      <div class="hunter-row">${spr(s.hunter, "big bob")}${bubble(s.line)}</div>
+      <div class="hunter-row">${bubble(s.line)}</div>
       ${qa}
     </section>`;
   }
@@ -437,6 +509,17 @@ const UI = (() => {
 
   function sounds(p, s) {
     if (!p) return;
+    const cur = s.players[s.turn], mineP = (pl) => pl && (role === "local" || pl.id === me.id);
+    if (s.cash && s.cash.fb && s.cash.fb.ok && (!p.cash || !p.cash.fb || p.cash.fb.k !== s.cash.fb.k) && mineP(cur)) levelUp(RPG.gain(cur.char, s.cash.fb.c, 1));
+    if (s.board && p.board && s.board.step === "reveal" && p.board.step !== "reveal" && s.board.pick === s.board.ans && mineP(cur)) levelUp(RPG.gain(cur.char, s.board.c, 2));
+    if (s.final && s.final.fb && s.final.fb.ok && (!p.final || !p.final.fb || p.final.fb.k !== s.final.fb.k)) {
+      const who = s.players.filter((pl) => pl.result === "home" && (s.final.fb.who ? pl.id === s.final.fb.who : true) && mineP(pl));
+      for (const pl of who) levelUp(RPG.gain(pl.char, s.final.fb.c, 1));
+    }
+    if (s.phase === "turnEnd" && p.phase !== "turnEnd") { const r = cur.result; if (r === "home") shout("SAFE!", "safe"); else if (r === "caught") shout("GOTCHA!", "gotcha"); }
+    if (s.phase === "end" && p.phase !== "end") shout(s.won ? "VICTORY!" : "CAUGHT!", s.won ? "safe" : "gotcha");
+    if (s.final && s.final.push && s.final.push.done && s.final.push.ok && p.final && p.final.push && !p.final.push.done) shout("PUSHBACK!", "safe");
+    if (s.phase === "intro" && p.phase !== "intro") shout("HERE COMES THE HUNTER", "gotcha");
     const b = s.board, pb = p.board;
     if (b && pb && b.step === "reveal" && pb.step !== "reveal") (b.pick === b.ans ? Studio.cheer(1200) : Studio.gasp(1200));
     if (s.phase === "turnEnd" && p.phase !== "turnEnd") (s.players[s.turn].result === "home" ? Studio.cheer(3000) : Studio.gasp(2500));
@@ -494,15 +577,16 @@ const UI = (() => {
     saveMe();
     const code = Net.code();
     role = "host";
-    lobby = { phase: "lobby", code, host: me.id, hunter: LS("rd.hunter", "archivist"), players: [{ id: me.id, name: me.name, char: me.char }], now: Date.now() };
+    lobby = { phase: "lobby", code, host: me.id, hunter: LS("rd.hunter", "archivist"), players: [{ id: me.id, name: me.name, char: me.char, stats: RPG.stats(me.char) }], now: Date.now() };
     lobbyView();
     try {
       await Net.open(code, me.id, {
         hello: (p) => {
           if (!lobby || game) { if (game) Net.sendState(game.s); return; }
           const ex = lobby.players.find((x) => x.id === p.pid);
-          if (ex) { ex.name = p.name; ex.char = p.char; }
-          else if (lobby.players.length < 4) lobby.players.push({ id: p.pid, name: String(p.name).slice(0, 14), char: CHARS[p.char] ? p.char : "aroha" });
+          const st = p.stats && typeof p.stats === "object" ? Object.fromEntries(RPG.CATS.map((k) => [k, Math.max(0, Math.min(RPG.MAX, +p.stats[k] || 0))])) : null;
+          if (ex) { ex.name = p.name; ex.char = p.char; ex.stats = st; }
+          else if (lobby.players.length < 4) lobby.players.push({ id: p.pid, name: String(p.name).slice(0, 14), char: CHARS[p.char] ? p.char : "aroha", stats: st });
           pushLobby();
         },
         bye: (p) => { if (lobby && !game) { lobby.players = lobby.players.filter((x) => x.id !== p.pid); pushLobby(); } },
@@ -531,7 +615,7 @@ const UI = (() => {
           if (st.phase === "lobby") { if (game) endLocal(); lobby = st; lobbyView(); } else renderGame(st);
         },
       });
-      const sayHi = () => Net.send("hello", { pid: me.id, name: me.name, char: me.char });
+      const sayHi = () => Net.send("hello", { pid: me.id, name: me.name, char: me.char, stats: RPG.stats(me.char) });
       sayHi(); hello = setInterval(sayHi, 1500);
       setTimeout(() => { if (!remote && role === "guest") { stopOnline(); onlineScreen(`No room called ${code}. Check the code with the host.`); } }, 9000);
       watchdog = setInterval(() => { if (remote && Date.now() - lastSeen > 12000) toast("Lost contact with the host…", 2500); }, 4000);
@@ -572,6 +656,7 @@ const UI = (() => {
       if (g === "solo" || g === "team") startSetup(g);
       else if (g === "online") onlineScreen();
       else if (g === "pub") { screen = "pub"; Pub.open(); }
+      else if (g === "roster") roster();
       return;
     }
     if (t.dataset.send) { Sfx.tap(); send(t.dataset.send, t.dataset.v == null ? null : t.dataset.send === "take" ? t.dataset.v : +t.dataset.v); return; }
@@ -626,5 +711,5 @@ const UI = (() => {
   title();
   if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
 
-  return { esc, spr, bar, show, toast, title, money, LS, SAVE, me };
+  return { esc, spr, portrait, vn, bar, show, toast, title, money, LS, SAVE, me, statBars, levelUp, shout, typeIn };
 })();

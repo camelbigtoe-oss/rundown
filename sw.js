@@ -1,8 +1,8 @@
 // Offline cache for THE RUNDOWN. Bump VERSION after changing any file.
 // Online team play still needs a connection; everything else works offline.
-const VERSION = "rundown-v3";
+const VERSION = "rundown-v4";
 const CORE = [
-  "./", "index.html", "style.css", "sprites.js", "data.js", "bank.js",
+  "./", "index.html", "style.css", "sprites.js", "portraits.js", "data.js", "rpg.js", "bank.js",
   "q-gk.js", "q-nz.js", "q-geo.js", "q-sci.js", "q-sport.js", "q-ent.js", "q-hist.js",
   "flags.js", "sfx.js", "studio.js", "engine.js", "net.js", "pub.js", "ui.js",
   "manifest.json", "icon.svg", "icon-192.png", "icon-512.png",

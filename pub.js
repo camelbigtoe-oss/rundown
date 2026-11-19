@@ -18,6 +18,13 @@ const Pub = (() => {
   const PER = 10;
   const RIVALS = ["Quizteama Aguilera", "Les Quizerables", "The Quizzly Bears", "Agatha Quiztie", "Universally Challenged", "Tequila Mockingbird", "Trivia Newton-John", "Sherlock Homies"];
   let st = null; // the quiz in progress
+  let party = UI_LS("rd.party", ["jackie", "zach"]);
+  function UI_LS(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } }
+  const PARTY = 2, HINTS = 2;
+  function mateChip(id) {
+    const r = RPG.get(id), on = party.includes(id);
+    return `<button class="mate ${on ? "on" : ""}" data-pub="mate" data-v="${id}">${UI.portrait(id)}<b>${UI.esc(CHARS[id].name)}</b><small>Lv ${r.lv} · ${RPG.SHORT[RPG.best(id)]} ${r.stats[RPG.best(id)]}</small></button>`;
+  }
 
   const esc = (s) => UI.esc(s);
   const save = () => UI.SAVE("rd.pub", st);
@@ -56,7 +63,7 @@ const Pub = (() => {
     const w = weekNo() + offset;
     const hist = UI.LS("rd.pubhist", []);
     const resume = st && st.stage !== "done";
-    const team = (st && st.team) || UI.LS("rd.team", "Phat Eddie's Finest");
+    const team = (st && st.team) || UI.LS("rd.team", "Team Discovery Channel");
     UI.show(`${UI.bar("TUESDAY QUIZ")}
       <div class="neon-sign"><span>Phat Eddie's</span><small>★ QUIZ NIGHT ★</small></div>
       <section class="panel pub">
@@ -67,6 +74,9 @@ const Pub = (() => {
         </div>
         ${resume ? `<button class="btn big amber" data-pub="resume"><b>CARRY ON: ${esc(st.team)}</b><small>${tuesday(st.week)} · round ${st.round + 1} of 8</small></button>` : ""}
         <label class="lbl">Team name<input id="team" maxlength="28" value="${esc(team)}"></label>
+        <div class="lbl">Bring two teammates <span class="lbl-note">(${party.length}/${PARTY})</span></div>
+        <div class="mates">${CHAR_ORDER.filter((id) => id !== "connor").map(mateChip).join("")}</div>
+        <p class="hint">Each teammate can give ${HINTS} hints a round. Higher level and a stronger subject mean better clues, but low levels can get it wrong.</p>
         <div class="lbl">Joker round (doubles your score)</div>
         <div class="jokers">${ROUNDS.map((r, i) => `<button class="jk ${i === 5 ? "on" : ""}" data-pub="joker" data-v="${i}">${i + 1}. ${esc(r.name)}</button>`).join("")}</div>
         <button class="btn big gold" data-pub="start" data-v="${w}"><b>${resume ? "START A NEW QUIZ" : "START THE QUIZ"} ▸</b></button>
@@ -78,10 +88,11 @@ const Pub = (() => {
   }
 
   function start(w) {
-    const team = ($("#team").value || "").trim() || "Phat Eddie's Finest";
+    const team = ($("#team").value || "").trim() || "Team Discovery Channel";
     UI.SAVE("rd.team", team);
     const jk = $(".jk.on"); const joker = jk ? +jk.dataset.v : 5;
-    st = { week: w, team, joker, round: 0, q: 0, stage: "q", ids: ROUNDS.map((r) => pickRound(r.c, w)), answers: ROUNDS.map(() => Array(PER).fill("")), marks: ROUNDS.map(() => null) };
+    st = { week: w, team, joker, round: 0, q: 0, stage: "q", ids: ROUNDS.map((r) => pickRound(r.c, w)), answers: ROUNDS.map(() => Array(PER).fill("")), marks: ROUNDS.map(() => null),
+      party: party.slice(), hints: ROUNDS.map(() => ({})), left: ROUNDS.map(() => Object.fromEntries(party.map((id) => [id, HINTS]))), xp: [] };
     save(); question();
   }
 
@@ -95,6 +106,7 @@ const Pub = (() => {
         <div class="dots">${st.answers[st.round].map((a, i) => `<button class="dot ${i === st.q ? "on" : ""} ${a ? "done" : ""}" data-pub="goto" data-v="${i}" aria-label="Question ${i + 1}">${i + 1}</button>`).join("")}</div>
         <div class="qcard pubq paper">${it.flag ? `<div class="flag-wrap">${Flags.svg(it.flag)}</div>` : ""}<p>${esc(it.q)}</p></div>
         <input id="ans" class="answer" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Your answer" value="${esc(st.answers[st.round][st.q])}">
+        ${partyBar(it)}
         <div class="row gap">
           <button class="btn" data-pub="prev" ${st.q === 0 ? "disabled" : ""}>◂ Back</button>
           ${last ? `<button class="btn gold" data-pub="handin"><b>HAND IN SHEET ▸</b></button>` : `<button class="btn teal" data-pub="next"><b>NEXT ▸</b></button>`}
@@ -105,6 +117,31 @@ const Pub = (() => {
     inp.addEventListener("input", () => { st.answers[st.round][st.q] = inp.value; save(); });
     inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); last ? handin() : move(1); } });
     if (matchMedia("(pointer:fine)").matches) inp.focus();
+  }
+  function partyBar(it) {
+    const ps = st.party || []; if (!ps.length) return "";
+    const h = st.hints && st.hints[st.round][st.q];
+    const cat = RPG.catOf(it.c);
+    return `<div class="party">${ps.map((id) => {
+      const r = RPG.get(id), n = st.left[st.round][id] ?? 0;
+      return `<button class="ask" data-pub="ask" data-v="${id}" ${n <= 0 || h ? "disabled" : ""}>${UI.portrait(id)}<span><b>Ask ${esc(CHARS[id].name)}</b><small>Lv ${r.lv} · ${RPG.SHORT[cat]} ${r.stats[cat]} · ${n} left</small></span></button>`;
+    }).join("")}</div>
+    ${h ? UI.vn(h.id, CHARS[h.id].name.toUpperCase(), h.text, true, "teammate") : ""}`;
+  }
+  // XP for the round: Connor and the party learn from every right answer; whoever hinted learns most
+  function awardRound(i) {
+    st.xp ||= [];
+    if (st.xp[i] || !st.marks[i]) return;
+    st.xp[i] = 1;
+    const ups = [];
+    st.ids[i].forEach((id, k) => {
+      if (!st.marks[i][k]) return;
+      const it = itemById(id), h = st.hints && st.hints[i][k];
+      ups.push(RPG.gain("connor", it.c, 1));
+      for (const m of st.party || []) ups.push(RPG.gain(m, it.c, h && h.id === m ? 3 : 1));
+    });
+    const seen = new Set();
+    ups.filter(Boolean).reverse().forEach((u) => { if (!seen.has(u.id)) { seen.add(u.id); UI.levelUp(u); } });
   }
   function move(d) { st.q = Math.max(0, Math.min(PER - 1, st.q + d)); save(); question(); }
   function handin() {
@@ -179,7 +216,23 @@ const Pub = (() => {
       case "handin": handin(); break;
       case "toggle": st.marks[st.round][+v] = !st.marks[st.round][+v]; save(); mark(); break;
       case "report": if (confirm("Remove this question from future games on this phone?")) { Bank.flag(v); UI.toast("Question removed"); } break;
-      case "scores": st.stage = "board"; save(); scores(); Sfx.step(); break;
+      case "scores": st.stage = "board"; awardRound(st.round); save(); scores(); Sfx.step(); break;
+      case "mate": {
+        if (party.includes(v)) party = party.filter((x) => x !== v);
+        else { party.push(v); if (party.length > PARTY) party.shift(); }
+        UI.SAVE("rd.party", party);
+        $$(".mate").forEach((b) => b.classList.toggle("on", party.includes(b.dataset.v)));
+        const note = $(".lbl-note"); if (note) note.textContent = `(${party.length}/${PARTY})`;
+        break;
+      }
+      case "ask": {
+        const it = itemById(st.ids[st.round][st.q]);
+        if (!st.left[st.round][v]) return;
+        const h = RPG.hint(v, it);
+        st.hints[st.round][st.q] = { id: v, text: h.text };
+        st.left[st.round][v]--; save(); question();
+        break;
+      }
       case "nextround": st.round++; st.q = 0; st.stage = "q"; save(); question(); break;
       case "home": home(); break;
     }

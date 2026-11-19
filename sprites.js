@@ -121,6 +121,10 @@ const Sprites = (() => {
       for (let i = 0; i < 9; i += 2) P("#cfa53a", cx - 5 + i, 28, 1, 1);
       P("#5d6b4f", L + 1, 19, 1, 9); P("#5d6b4f", R - 2, 19, 1, 9);
     }
+    if (t.graphic === "globe") {
+      const cx = mid; P("#2f6fb0", cx - 2, 20, 4, 5); P("#2f6fb0", cx - 3, 21, 6, 3);
+      P("#4bbf6a", cx - 2, 21, 2, 1); P("#4bbf6a", cx, 23, 2, 1); P("#4bbf6a", cx - 3, 22, 1, 1);
+    }
     if (t.graphic === "hivis") {
       P("#d4f21f", L, 17, 4, 14); P("#d4f21f", R - 3, 17, 4, 14); P("#d4f21f", L, 26, b.tw, 5);
       P("#cfd6dd", L, 23, 4, 1); P("#cfd6dd", R - 3, 23, 4, 1); P("#cfd6dd", L, 28, b.tw, 1);
