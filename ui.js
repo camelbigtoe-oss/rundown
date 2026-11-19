@@ -813,7 +813,12 @@ const UI = (() => {
     if (u === "reset") { RPG.relockAll(); toast("Hidden characters locked again on this device", 3000); }
     if (u) history.replaceState(null, "", location.pathname);
   }
-  if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
+  if ("serviceWorker" in navigator && location.protocol === "https:") {
+    // when a new version takes over, reload once so the update shows straight away
+    const had = !!navigator.serviceWorker.controller; let done = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => { if (had && !done) { done = true; location.reload(); } });
+    navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then((r) => r.update()).catch(() => {});
+  }
 
   return { esc, spr, portrait, vn, bar, show, toast, title, money, LS, SAVE, me, statBars, levelUp, shout, typeIn, unlockCheck };
 })();

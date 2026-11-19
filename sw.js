@@ -1,6 +1,6 @@
 // Offline cache for THE RUNDOWN. Bump VERSION after changing any file.
 // Online team play still needs a connection; everything else works offline.
-const VERSION = "rundown-v7";
+const VERSION = "rundown-v8";
 const CORE = [
   "./", "index.html", "style.css", "sprites.js", "portraits.js", "data.js", "rpg.js", "bank.js",
   "q-gk.js", "q-nz.js", "q-geo.js", "q-sci.js", "q-sport.js", "q-ent.js", "q-hist.js", "q-hp.js",
@@ -9,7 +9,7 @@ const CORE = [
 ];
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(CORE)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(CORE.map((u) => new Request(u, { cache: "reload" })))).then(() => self.skipWaiting()));
 });
 self.addEventListener("activate", (e) => {
   e.waitUntil(caches.keys()
@@ -29,7 +29,8 @@ self.addEventListener("fetch", (e) => {
   }
   if (url.origin !== location.origin) return;
   // app files: network-first so updates land, cache when offline
-  e.respondWith(fetch(e.request).then((res) => {
+  // no-cache: always check GitHub for a newer file instead of trusting the 10-minute browser cache
+  e.respondWith(fetch(e.request, { cache: "no-cache" }).then((res) => {
     if (res.ok) { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(e.request, copy)); }
     return res;
   }).catch(() => caches.match(e.request, { ignoreSearch: true }).then((r) => r || caches.match("index.html"))));
