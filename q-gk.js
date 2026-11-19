@@ -49,8 +49,8 @@ What is the smallest controllable element of a digital image called?|Pixel|Byte;
 How many bits are in a byte?|8|4;16;10|eight
 Paddington Bear travelled to London from which country?|Peru|Bolivia;Chile;Brazil
 What is Sherlock Holmes's address in London?|221B Baker Street|10 Downing Street;12 Grimmauld Place;4 Privet Drive|221b baker street;221b;baker street
-In "Harry Potter and the Philosopher's Stone", what is the name of Hagrid's three-headed dog?|Fluffy|Fang;Norbert;Buckbeak||h
-What position does Harry Potter play in Quidditch?|Seeker|Keeper;Chaser;Beater||h
+In "Harry Potter and the Philosopher's Stone", what is the name of Hagrid's three-headed dog?|Fluffy|Fang;Norbert;Buckbeak||h
+What position does Harry Potter play in Quidditch?|Seeker|Keeper;Chaser;Beater||h
 Who is the Greek god of the sea?|Poseidon|Hermes;Ares;Apollo
 Who is the Roman equivalent of the Greek god Zeus?|Jupiter|Mars;Saturn;Neptune
 Which Norse god wields the hammer Mjölnir?|Thor|Odin;Loki;Freyr
@@ -83,7 +83,7 @@ How many A4 sheets fit on one A2 sheet?|4|2;8;6|four
 What is the symbol "&" called?|Ampersand|Asterisk;Octothorpe;Pilcrow
 What is the paragraph symbol "¶" called?|Pilcrow|Section sign;Ampersand;Interrobang
 Which month is named after Julius Caesar?|July|June;August;March
-At what temperature in degrees Fahrenheit does water freeze?|32|0;-32;212|32 degrees;32f
+At what temperature in degrees Fahrenheit does water freeze?|32|0;30;212|32 degrees;32f
 In "The Fellowship of the Ring", who cries "Fly, you fools!" as he falls in Moria?|Gandalf|Saruman;Radagast;Elrond
 What is the name of the inn in Bree where the hobbits meet Strider?|The Prancing Pony|The Green Dragon;The Golden Perch;The Ivy Bush|prancing pony
 `);

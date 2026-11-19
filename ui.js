@@ -66,7 +66,11 @@ const UI = (() => {
     return `<div class="statgrid ${small ? "small" : ""}">${RPG.CATS.map((k) => `<div class="st"><span>${RPG.SHORT[k]}</span><div class="sbar"><i style="width:${(r.stats[k] / RPG.MAX) * 100}%"></i></div><b>${r.stats[k]}</b></div>`).join("")}</div>`;
   }
   function unlockCheck() {
-    RPG.checkUnlocks().forEach((id, i) => setTimeout(() => { shout("UNLOCKED!", "lvl"); toast(`New character unlocked: ${CHARS[id].name}!`, 3000); }, i * 1500));
+    RPG.checkUnlocks().forEach((id, i) => setTimeout(() => {
+      const o = id.startsWith("outfit:") && OUTFITS.find((x) => "outfit:" + x.id === id);
+      const msg = o ? `New outfit for Connor: ${o.name}!` : HUNTERS[id] ? `Secret boss unlocked: ${HUNTERS[id].name}!` : `New character unlocked: ${CHARS[id].name}!`;
+      shout(HUNTERS[id] ? "SECRET BOSS!" : "UNLOCKED!", HUNTERS[id] ? "gotcha" : "lvl"); toast(msg, 3200);
+    }, i * 1600));
   }
   function levelUp(up) { if (!up) return; shout("LEVEL UP!", "lvl"); toast(`${CHARS[up.id].name} reached Lv ${up.lv}!`, 2400); }
   function stars(n) { return `<span class="stars" aria-label="${n} of 4">${"★".repeat(n)}<i>${"★".repeat(4 - n)}</i></span>`; }
@@ -126,9 +130,10 @@ const UI = (() => {
     clearInterval(titleTimer);
     titleTimer = setInterval(() => {
       if (screen !== "title") return clearInterval(titleTimer);
-      hi = (hi + 1) % HUNTER_ORDER.length; li = (li + 1) % HOST.lines.welcome.length;
+      const hs = HUNTER_ORDER.filter((h) => !HUNTERS[h].hidden || RPG.isUnlocked(h));
+      hi = (hi + 1) % hs.length; li = (li + 1) % HOST.lines.welcome.length;
       const el = $("#t-hunter"), ln = $("#t-line");
-      if (el) { el.innerHTML = hunterFig(HUNTER_ORDER[hi]); el.classList.remove("swap"); void el.offsetWidth; el.classList.add("swap"); }
+      if (el) { el.innerHTML = hunterFig(hs[hi]); el.classList.remove("swap"); void el.offsetWidth; el.classList.add("swap"); }
       if (ln) { ln.innerHTML = vn("host", "GAZ", HOST.lines.welcome[li], true, "host"); typeIn(); }
     }, 5000);
   }
@@ -152,6 +157,7 @@ const UI = (() => {
           </div>
           ${statBars(id)}
           ${c.custom ? `<button class="link" data-act="del-custom" data-id="${id}">Delete character</button>` : ""}
+          ${id === "connor" ? `<button class="btn small gold" data-act="outfits"><b>OUTFITS</b></button>` : ""}
         </div>
       </div>`;
     };
@@ -215,10 +221,27 @@ const UI = (() => {
   }
   function hunterCard(h, on) {
     const H = HUNTERS[h];
+    if (H.hidden && !RPG.isUnlocked(h)) return `<div class="hcard locked"><div class="hcard-spr">${spr(h, "")}</div><div class="hcard-txt"><b>???</b>${stars(H.stars)}<small>Secret boss. ${esc(UNLOCKS[h].hint)} to unlock.</small></div></div>`;
     return `<button class="hcard ${on ? "on" : ""}" data-hunter="${h}" style="--hc:${H.color}">
       <div class="hcard-spr">${spr(h, "bob")}</div>
       <div class="hcard-txt"><b>${esc(H.name)}</b>${stars(H.stars)}<small>${esc(H.blurb)}</small></div>
     </button>`;
+  }
+
+  // ---------- Connor's outfits ----------
+  function outfits() {
+    screen = "outfits";
+    const cards = OUTFITS.map((o) => {
+      const ok = RPG.outfitOK(o.id), on = RPG.outfit === o.id;
+      const spec = JSON.parse(JSON.stringify(CONNOR_BASE));
+      for (const [k, v] of Object.entries(o.patch)) { if (v === null) delete spec[k]; else spec[k] = v; }
+      const img = `<img class="spr big ${ok ? "bob" : ""}" src="${Sprites.url("outfit-" + o.id, spec)}" alt="">`;
+      return `<button class="outfit ${ok ? "" : "locked"} ${on ? "on" : ""}" ${ok ? `data-act="wear" data-id="${o.id}"` : "disabled"}>
+        <div class="of-spr">${img}</div><b>${ok ? esc(o.name) : "???"}</b><small>${on ? "Wearing" : ok ? "Tap to wear" : esc(o.hint)}</small></button>`;
+    }).join("");
+    show(`${bar("CONNOR'S WARDROBE")}
+      <section class="panel"><h2 class="h">Outfits</h2><div class="outfits">${cards}</div>
+      <p class="hint">Unlock outfits by playing. Connor wears his outfit everywhere in the game.</p></section>`);
   }
 
   // ---------- character creator ----------
@@ -643,7 +666,7 @@ const UI = (() => {
     rec.games++; if (s.won && won > 0) rec.wins++; rec.total += won; rec.best = Math.max(rec.best, won);
     SAVE("rd.rec", rec);
     if (s.won && won > 0) { RPG.beat(s.hunter); if (s.mode === "solo") RPG.bump("soloWins"); }
-    RPG.bump("total", won);
+    RPG.bump("total", won); RPG.bump("games");
     RPG.bump("caught", mine.filter((p) => p.result === "caught").length);
     setTimeout(unlockCheck, 1500);
   }
@@ -786,6 +809,8 @@ const UI = (() => {
       case "to-hunter": syncNames(); setup.step = "hunter"; renderSetup(); break;
       case "begin": beginLocal(); break;
       case "create": creator(true); break;
+      case "outfits": outfits(); break;
+      case "wear": if (RPG.setOutfit(t.dataset.id)) { toast("Outfit on!"); outfits(); } break;
       case "del-custom": if (confirm("Delete this character?")) { RPG.removeCustom(t.dataset.id); roster(); } break;
       case "again":
         if (role === "host") { endLocal(); lastState = null; lobby.phase = "lobby"; pushLobby(); }

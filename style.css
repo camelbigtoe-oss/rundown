@@ -445,3 +445,29 @@ button { cursor: pointer; }
 .cc-main { min-width: 0; }
 .cc-main .statgrid { grid-template-columns: 1fr; gap: 3px; margin-top: 8px; }
 .cc-main .st { grid-template-columns: 30px 1fr 28px; }
+
+/* hunters locked, outfits, ponderer */
+.hcard.locked { opacity: .85; cursor: default; }
+.hcard.locked .spr { filter: brightness(0); }
+.hcard.locked .hcard-txt b { color: var(--faint); letter-spacing: .3em; }
+.outfits { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.outfit { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px; background: linear-gradient(180deg, var(--win-a), var(--win-b)); border: 2px solid var(--rim); border-radius: 6px; box-shadow: 0 0 0 2px var(--ink); }
+.outfit.on { border-color: var(--gold); box-shadow: 0 0 0 2px var(--ink), 0 0 0 5px var(--gold); }
+.outfit .of-spr { height: 150px; display: flex; align-items: flex-end; }
+.outfit b { font-weight: 400; font-size: 15px; }
+.outfit small { font-size: 12px; color: var(--dim); text-align: center; }
+.outfit.locked .spr { filter: brightness(0); opacity: .8; }
+.outfit.locked { cursor: default; }
+.ponder { margin-top: 16px; padding: 12px; background: #1f2a24; border: 2px solid #f0d8a8; border-radius: 6px; box-shadow: 0 0 0 2px var(--ink); }
+.pd-head span { display: block; font-size: 18px; color: #ffd27a; letter-spacing: .14em; text-shadow: 2px 2px 0 var(--ink); }
+.pd-head small { display: block; font-size: 12px; color: #c9d6c0; margin-bottom: 8px; }
+.ponder ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.ponder li { font-size: 14px; color: #c9d6c0; }
+.ponder li b { font-weight: 400; color: #ffd27a; }
+.ponder li span { display: block; color: #f0f0e6; font-size: 15px; }
+.ponder li.new span { color: #fff; }
+.pd-guess { display: flex; gap: 8px; margin-top: 10px; }
+.pd-guess input { flex: 1; min-width: 0; background: var(--ink); color: var(--cream); border: 2px solid var(--rim); border-radius: 6px; padding: 8px 10px; font-size: 16px; }
+.pd-guess .btn { width: auto; margin: 0; }
+.pd-solved { margin-top: 10px; color: var(--ok); }
+.pd-wrong { margin-top: 10px; color: #ff9aa6; font-size: 14px; }

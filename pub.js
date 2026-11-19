@@ -5,16 +5,23 @@ const Pub = (() => {
   "use strict";
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-  const ROUNDS = [
-    { c: "gk", name: "General Knowledge" },
-    { c: "geo", name: "Geography" },
-    { c: "flag", name: "Picture Round: Flags" },
-    { c: "sci", name: "Science & Nature" },
-    { c: "sport", name: "Sport" },
-    { c: "nz", name: "Aotearoa" },
-    { c: "ent", name: "Film, TV & Music" },
-    { c: "hist", name: "History" },
+  // quizzes saved before rounds rotated use this fixed line-up
+  const LEGACY = [
+    { c: "gk", name: "General Knowledge" }, { c: "geo", name: "Geography" }, { c: "flag", name: "Picture Round: Flags" },
+    { c: "sci", name: "Science & Nature" }, { c: "sport", name: "Sport" }, { c: "nz", name: "Aotearoa" },
+    { c: "ent", name: "Film, TV & Music" }, { c: "hist", name: "History" },
   ];
+  // each week: General Knowledge first, flags third, Aotearoa sixth, and five other categories drawn by the week
+  const ROTATE = ["geo", "sci", "sport", "ent", "hist", "games", "food", "lit", "art", "music", "words", "myth", "space", "animals", "tech", "body", "maths", "cars"];
+  function roundsFor(w) {
+    const picks = Bank.shuffle(ROTATE.slice(), Bank.rng(w * 2654435 + 99)).slice(0, 5);
+    const name = (c) => ({ c, name: Bank.CATS[c] });
+    return [name("gk"), name(picks[0]), { c: "flag", name: "Picture Round: Flags" }, name(picks[1]), name(picks[2]), name("nz"), name(picks[3]), name(picks[4])].map((r) => (r.c === "nz" ? { c: "nz", name: "Aotearoa" } : r));
+  }
+  let ROUNDS = roundsFor(0);
+  // the Ponderer for a week, and how many points a solve on a given clue is worth
+  const ponderFor = (w) => PONDERERS[((w % PONDERERS.length) + PONDERERS.length) % PONDERERS.length];
+  const ponderPts = (clue) => 9 - clue;
   const PER = 10;
   const RIVALS = ["Quizteama Aguilera", "Les Quizerables", "The Quizzly Bears", "Agatha Quiztie", "Universally Challenged", "Tequila Mockingbird", "Trivia Newton-John", "Sherlock Homies"];
   let st = null; // the quiz in progress
@@ -48,19 +55,21 @@ const Pub = (() => {
   function rivals(w) {
     const r = Bank.rng(w * 104729 + 17);
     return RIVALS.map((name) => {
-      const skill = 0.42 + r() * 0.36, joker = Math.floor(r() * ROUNDS.length);
+      const skill = 0.42 + r() * 0.36, joker = Math.floor(r() * ROUNDS.length), solve = 2 + Math.floor(r() * 8); // 9 = never
       const scores = ROUNDS.map((rd, i) => { let n = 0; const p = rd.c === "flag" ? skill * 0.95 : skill; for (let k = 0; k < PER; k++) if (r() < p) n++; return i === joker ? n * 2 : n; });
-      return { name, scores, joker };
+      return { name, scores, joker, solve };
     });
   }
 
   // ---------- screens ----------
   function open() {
     st = UI.LS("rd.pub", null);
+    if (st) ROUNDS = st.rounds || LEGACY;
     home();
   }
   function home(offset = 0) {
     const w = weekNo() + offset;
+    ROUNDS = roundsFor(w);
     const hist = UI.LS("rd.pubhist", []);
     const resume = st && st.stage !== "done";
     const team = (st && st.team) || UI.LS("rd.team", "Team Discovery Channel");
@@ -91,7 +100,7 @@ const Pub = (() => {
     const team = ($("#team").value || "").trim() || "Team Discovery Channel";
     UI.SAVE("rd.team", team);
     const jk = $(".jk.on"); const joker = jk ? +jk.dataset.v : 5;
-    st = { week: w, team, joker, round: 0, q: 0, stage: "q", ids: ROUNDS.map((r) => pickRound(r.c, w)), answers: ROUNDS.map(() => Array(PER).fill("")), marks: ROUNDS.map(() => null),
+    st = { week: w, rounds: ROUNDS, ponder: { tried: {}, solved: 0, guesses: {} }, team, joker, round: 0, q: 0, stage: "q", ids: ROUNDS.map((r) => pickRound(r.c, w)), answers: ROUNDS.map(() => Array(PER).fill("")), marks: ROUNDS.map(() => null),
       party: party.slice(), hints: ROUNDS.map(() => ({})), left: ROUNDS.map(() => Object.fromEntries(party.map((id) => [id, HINTS]))), xp: [] };
     save(); question();
   }
@@ -168,15 +177,28 @@ const Pub = (() => {
             ${it.flag ? "" : `<button class="flagq" data-pub="report" data-v="${esc(id)}" title="Report a problem with this question">⚑</button>`}
           </div>`;
         }).join("")}</div>
+        ${ponderBox()}
         <button class="btn big gold" data-pub="scores"><b>SEE THE SCORES ▸</b></button>
         <p class="hint">Tap ✓/✗ to overrule the marking. ⚑ removes a question you think is wrong from future quizzes.</p>
       </section>`, "pub");
   }
 
+  function ponderBox() {
+    if (!st.ponder) return "";
+    const P = ponderFor(st.week), k = st.round + 1, p = st.ponder;
+    const clues = P.clues.slice(0, k).map((c, i) => `<li class="${i === k - 1 ? "new" : ""}"><b>Clue ${i + 1}</b> · ${ponderPts(i + 1)} pts<span>${esc(c)}</span></li>`).join("");
+    let foot;
+    if (p.solved) foot = `<div class="pd-solved">SOLVED on clue ${p.solved}: <b>${esc(P.a)}</b> · +${ponderPts(p.solved)} pts</div>`;
+    else if (p.tried[st.round]) foot = `<div class="pd-wrong">Your guess "${esc(p.guesses[st.round])}" isn't it. New clue next round.</div>`;
+    else foot = `<div class="pd-guess"><input id="pd" placeholder="Your guess (worth ${ponderPts(k)} pts)" autocomplete="off"><button class="btn small gold" data-pub="ponder"><b>LOCK IN</b></button></div>`;
+    if (!p.solved && k === 8 && p.tried[st.round]) foot += `<div class="pd-wrong">The answer was <b>${esc(P.a)}</b>.</div>`;
+    return `<div class="ponder"><div class="pd-head"><span>THE PONDERER</span><small>Clues get easier each round. Points drop each time.</small></div><ol>${clues}</ol>${foot}</div>`;
+  }
   function table(upto) {
     const rv = rivals(st.week);
-    const rows = [{ name: st.team, you: 1, total: ROUNDS.slice(0, upto + 1).reduce((a, _, i) => a + roundScore(i), 0) },
-      ...rv.map((t) => ({ name: t.name, total: t.scores.slice(0, upto + 1).reduce((a, b) => a + b, 0) }))];
+    const myP = st.ponder && st.ponder.solved && st.ponder.solved - 1 <= upto ? ponderPts(st.ponder.solved) : 0;
+    const rows = [{ name: st.team, you: 1, total: ROUNDS.slice(0, upto + 1).reduce((a, _, i) => a + roundScore(i), 0) + myP },
+      ...rv.map((t) => ({ name: t.name, total: t.scores.slice(0, upto + 1).reduce((a, b) => a + b, 0) + (t.solve <= 8 && t.solve - 1 <= upto ? ponderPts(t.solve) : 0) }))];
     rows.sort((a, b) => b.total - a.total || (b.you ? 1 : 0) - (a.you ? 1 : 0));
     let place = 0, prev = null;
     rows.forEach((r, i) => { if (r.total !== prev) place = i + 1; r.place = place; prev = r.total; });
@@ -190,7 +212,7 @@ const Pub = (() => {
     if (last && st.stage !== "done") {
       st.stage = "done";
       const hist = UI.LS("rd.pubhist", []);
-      hist.push({ date: tuesday(st.week), team: st.team, score: meRow.total, max: PER * (ROUNDS.length + 1), place: ord(meRow.place) });
+      hist.push({ date: tuesday(st.week), team: st.team, score: meRow.total, max: PER * (ROUNDS.length + 1) + 8, place: ord(meRow.place) });
       UI.SAVE("rd.pubhist", hist.slice(-40));
       if (meRow.place === 1) { RPG.bump("pubWins"); setTimeout(UI.unlockCheck, 800); }
     }
@@ -212,7 +234,15 @@ const Pub = (() => {
       case "week": home(+v); break;
       case "joker": $$(".jk").forEach((b) => b.classList.toggle("on", b === t)); break;
       case "start": if (st && st.stage !== "done" && !confirm("Start over? Your quiz in progress will be lost.")) return; start(+v); break;
-      case "resume": st.stage === "mark" ? mark() : st.stage === "board" ? scores() : question(); break;
+      case "ponder": {
+        const g = ($("#pd").value || "").trim(); if (!g) return;
+        const P = ponderFor(st.week);
+        st.ponder.tried[st.round] = true; st.ponder.guesses[st.round] = g;
+        if (Bank.matches(g, { a: P.a, x: P.x, c: "ponder" })) { st.ponder.solved = st.round + 1; UI.shout("SOLVED!", "safe"); }
+        else Sfx.wrong();
+        save(); mark(); break;
+      }
+      case "resume": ROUNDS = st.rounds || LEGACY; st.stage === "mark" ? mark() : st.stage === "board" ? scores() : question(); break;
       case "goto": st.q = +v; save(); question(); break;
       case "prev": move(-1); break;
       case "next": move(1); break;
@@ -241,5 +271,5 @@ const Pub = (() => {
     }
   });
 
-  return { open, weekNo, pickRound, ROUNDS };
+  return { open, weekNo, pickRound, roundsFor };
 })();

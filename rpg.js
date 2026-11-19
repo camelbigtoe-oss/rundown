@@ -3,18 +3,21 @@
 // Stats power the chase "hunch" (crossing off a wrong answer) and pub quiz teammate hints.
 const RPG = (() => {
   "use strict";
-  const CATS = ["gk", "nz", "geo", "sci", "sport", "ent", "hist"];
-  const SHORT = { gk: "GEN", nz: "NZ", geo: "GEO", sci: "SCI", sport: "SPT", ent: "ENT", hist: "HIS" };
+  // 20 quiz categories roll up into 8 stats
+  const CATS = ["gk", "nz", "geo", "sci", "sport", "ent", "hist", "games"];
+  const SHORT = { gk: "GEN", nz: "NZ", geo: "GEO", sci: "SCI", sport: "SPT", ent: "ENT", hist: "HIS", games: "GAM" };
+  const STAT_OF = { flag: "geo", food: "gk", words: "gk", cars: "gk", lit: "ent", art: "ent", music: "ent", myth: "hist", space: "sci", animals: "sci", tech: "sci", body: "sci", maths: "sci" };
   const MAX = 255, MAXLV = 99, PER_POINT = 4;
   let store;
   try { store = JSON.parse(localStorage.getItem("rd.rpg")) || {}; } catch { store = {}; }
   const save = () => { try { localStorage.setItem("rd.rpg", JSON.stringify(store)); } catch {} };
-  const catOf = (c) => (c === "flag" ? "geo" : c);
+  const catOf = (c) => STAT_OF[c] || c;
   const need = (lv) => 10 + lv * 2; // XP from this level to the next
 
   function get(id) {
     const b = BASE[id]; if (!b) return null;
     if (!store[id]) store[id] = { lv: b.lv, xp: 0, stats: { ...b.stats }, prog: {} };
+    for (const k of CATS) if (store[id].stats[k] == null) store[id].stats[k] = b.stats[k] ?? 100; // stats added later
     return store[id];
   }
   const stat = (id, c) => { const r = get(id); return r ? r.stats[catOf(c)] || 0 : 0; };
@@ -74,7 +77,7 @@ const RPG = (() => {
   // ---------- progress counters, unlocks and custom characters ----------
   let prog;
   try { prog = JSON.parse(localStorage.getItem("rd.prog")) || {}; } catch { prog = {}; }
-  prog = { soloWins: 0, caught: 0, total: 0, correct: 0, pubWins: 0, beat: {}, unlocked: [], ...prog };
+  prog = { soloWins: 0, caught: 0, total: 0, correct: 0, pubWins: 0, games: 0, beat: {}, unlocked: [], ...prog };
   const saveProg = () => { try { localStorage.setItem("rd.prog", JSON.stringify(prog)); } catch {} };
   function bump(key, n = 1) { prog[key] = (prog[key] || 0) + n; saveProg(); }
   function beat(h) { prog.beat[h] = true; saveProg(); }
@@ -105,7 +108,18 @@ const RPG = (() => {
   }
 
   // secret links: ?unlock=all unlocks every hidden character on this device, ?unlock=reset locks them again
+  // Connor's outfit: base spec with the chosen outfit's pieces swapped in
+  let outfit; try { outfit = localStorage.getItem("rd.outfit") || "classic"; } catch { outfit = "classic"; }
+  const outfitOK = (id) => id === "classic" || isUnlocked("outfit:" + id);
+  function applyOutfit() {
+    const o = OUTFITS.find((x) => x.id === outfit && outfitOK(x.id)) || OUTFITS[0];
+    const spec = JSON.parse(JSON.stringify(CONNOR_BASE));
+    for (const [k, v] of Object.entries(o.patch)) { if (v === null) delete spec[k]; else spec[k] = v; }
+    CHARS.connor.spec = spec; Sprites.forget("connor"); Portraits.forget("connor");
+  }
+  function setOutfit(id) { if (!outfitOK(id)) return false; outfit = id; try { localStorage.setItem("rd.outfit", id); } catch {} applyOutfit(); return true; }
+  applyOutfit();
   function unlockAll() { prog.unlocked = Object.keys(UNLOCKS); saveProg(); }
   function relockAll() { prog.unlocked = []; saveProg(); }
-  return { unlockAll, relockAll, CATS, SHORT, MAX, get, stat, stats, gain, need, best, hint, catOf, bump, beat, isUnlocked, available, checkUnlocks, addCustom, removeCustom, get prog() { return prog; } };
+  return { setOutfit, outfitOK, get outfit() { return outfit; }, unlockAll, relockAll, CATS, SHORT, MAX, get, stat, stats, gain, need, best, hint, catOf, bump, beat, isUnlocked, available, checkUnlocks, addCustom, removeCustom, get prog() { return prog; } };
 })();

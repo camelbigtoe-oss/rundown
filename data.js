@@ -208,7 +208,7 @@ const TEAM = { name: "Team Discovery Channel", captain: "connor", members: ["con
 
 // starting level and stats; levels and stats then grow with play (see rpg.js)
 const BASE = (() => {
-  const S = (all, o = {}) => ({ gk: all, nz: all, geo: all, sci: all, sport: all, ent: all, hist: all, ...o });
+  const S = (all, o = {}) => ({ gk: all, nz: all, geo: all, sci: all, sport: all, ent: all, hist: all, games: all, ...o });
   return {
     connor: { lv: 50, stats: S(210) },
     jackie: { lv: 42, stats: S(175, { gk: 185, nz: 180, hist: 182, ent: 178, sport: 160 }) },
@@ -277,7 +277,7 @@ Object.assign(CHARS, {
 });
 CHAR_ORDER.push("raven", "velvet", "nyx", "rei", "ember", "yuki");
 (() => {
-  const S = (all, o = {}) => ({ gk: all, nz: all, geo: all, sci: all, sport: all, ent: all, hist: all, ...o });
+  const S = (all, o = {}) => ({ gk: all, nz: all, geo: all, sci: all, sport: all, ent: all, hist: all, games: all, ...o });
   Object.assign(BASE, {
     raven: { lv: 35, stats: S(130, { hist: 200, ent: 160 }) },
     velvet: { lv: 35, stats: S(130, { sci: 195, hist: 160 }) },
@@ -297,3 +297,57 @@ const UNLOCKS = {
   yuki: { hint: "Answer 150 questions right", test: (p) => p.correct >= 150 },
   velvet: { hint: "Come 1st at a Tuesday quiz", test: (p) => p.pubWins >= 1 },
 };
+
+// ---------- secret boss: Shadow Connor (unlock by beating all four hunters) ----------
+HUNTERS.shadow = {
+  name: "SHADOW CONNOR", short: "Shadow Connor", stars: 4, acc: 0.97, speed: 3.0, tier: 2.0, color: "#ff2a4a", hidden: true,
+  blurb: "Connor's dark mirror. Knows everything Connor knows, and everything he's forgotten.",
+  spec: {
+    build: "big", belly: 1, strong: 1, skin: "#4a3f5e", hair: "#0a0a12", hairStyle: "volume", beard: "big", beardColor: "#0a0a12",
+    mouth: "smirk", mean: 1, eye: "#ff2a4a", browColor: "#000",
+    top: { style: "tee", color: "#141018", graphic: "ring" }, bottom: { style: "shorts", color: "#141018" },
+    socks: { color: "#2a2a3a", stripe: "#ff2a4a" }, shoes: { style: "hi", color: "#141018", accent: "#ff2a4a", toe: "#2a2a3a", sole: "#2a2a3a" },
+  },
+  lines: {
+    intro: ["Hello, Connor. Did you miss me?", "I'm you, but I actually revised.", "Every answer you know, I knew first."],
+    offer: ["Go on. Take the high road. You always do.", "I know which one you'll pick. I picked it first.", "Greedy. Just like me."],
+    right: ["Obviously. I'm you.", "Too easy for us.", "We knew that one."],
+    wrong: ["Even shadows flicker.", "That was your fault, not mine.", "Hm. A memory leak."],
+    caught: ["Caught by yourself. How embarrassing.", "You can't outrun your own shadow.", "Back into the dark you go."],
+    home: ["Lucky. Very lucky.", "You got away from yourself. Weird feeling, isn't it?", "Fine. Go home."],
+    win: ["The shadow always wins.", "You were never going to beat yourself."],
+    lose: ["Impossible. I AM you.", "Well played, light side. Well played."],
+  },
+};
+HUNTER_ORDER.push("shadow");
+UNLOCKS.shadow = { hint: "Beat all four hunters", test: (p) => ["archivist", "grimwood", "kahu", "null"].every((h) => p.beat[h]) };
+
+// ---------- Connor's unlockable outfits (original designs, video-game inspired) ----------
+const OUTFITS = [
+  { id: "classic", name: "Classic Connor", hint: "", patch: {} },
+  { id: "blaster", name: "Blaster Bot", hint: "Play 5 games", test: (p) => p.games >= 5,
+    patch: { top: { style: "bodysuit", color: "#2f6fe0", accent: "#7fd0ff" }, bottom: { style: "tights", color: "#2f6fe0" }, socks: null,
+      shoes: { style: "boot", color: "#7fd0ff", sole: "#1a3a8a" }, helmet: { color: "#2f6fe0", accent: "#7fd0ff", gem: "#ff4d5e" }, cannon: { color: "#7fd0ff", accent: "#1a3a8a" } } },
+  { id: "ninja", name: "Shadow Ninja", hint: "Answer 100 questions right", test: (p) => p.correct >= 100,
+    patch: { top: { style: "bodysuit", color: "#17171c", accent: "#c8102e" }, bottom: { style: "tights", color: "#17171c" }, socks: null,
+      shoes: { style: "low", color: "#17171c", sole: "#2a2a30" }, mask: "#17171c", headband: "#c8102e" } },
+  { id: "wizard", name: "Arch Wizard", hint: "Answer 500 questions right", test: (p) => p.correct >= 500,
+    patch: { top: { style: "gown", color: "#4b2fb8", trim: "#ffd166", sleeve: "#3a2290" }, bottom: { style: "none", color: "#000" }, socks: null,
+      shoes: { style: "low", color: "#3a2a1a" }, wizardHat: { color: "#4b2fb8", star: "#ffd166" } } },
+  { id: "paladin", name: "Holy Paladin", hint: "Beat The Archivist and Lady Grimwood", test: (p) => !!(p.beat.archivist && p.beat.grimwood),
+    patch: { top: { style: "bodysuit", color: "#c9ced8", accent: "#ffd166" }, bottom: { style: "tights", color: "#9aa0ac" }, socks: null,
+      shoes: { style: "boot", color: "#9aa0ac", sole: "#5a5f6a" }, helmet: { color: "#c9ced8", accent: "#ffd166", plume: "#c8102e" } } },
+  { id: "marine", name: "Space Marine", hint: "Beat Dr. Null", test: (p) => !!p.beat.null,
+    patch: { top: { style: "bodysuit", color: "#4a6a3a", accent: "#c9a24a" }, bottom: { style: "tights", color: "#4a6a3a" }, socks: null,
+      shoes: { style: "boot", color: "#2a3a22", sole: "#141a10" }, helmet: { color: "#4a6a3a", accent: "#c9a24a", visor: "#ffb020" }, cannon: { color: "#555c66", accent: "#c9a24a" } } },
+  { id: "golden", name: "Golden God", hint: "Win $250,000 in total", test: (p) => p.total >= 250000,
+    patch: { top: { style: "suit", color: "#d4af37", tie: "#111", vest: "#b8932a" }, bottom: { style: "pants", color: "#d4af37" }, socks: null,
+      shoes: { style: "low", color: "#d4af37", sole: "#8a6a1a" }, shades: 1 } },
+  { id: "pirate", name: "Pirate Captain", hint: "Win a Tuesday quiz", test: (p) => p.pubWins >= 1,
+    patch: { top: { style: "coat", color: "#9c1b2e", inner: "#f4ead6" }, bottom: { style: "pants", color: "#2a1a12" }, socks: null,
+      shoes: { style: "boot", color: "#2a1a12", sole: "#120a06" }, pirateHat: "#141414", eyepatch: 1 } },
+  { id: "hotdog", name: "The Hot Dog", hint: "Get caught 10 times", test: (p) => p.caught >= 10,
+    patch: { top: { style: "hotdog", color: "#c8402e", bun: "#d9a35a" }, socks: null, shoes: { style: "low", color: "#c8102e", sole: "#7a0a1a" } } },
+];
+for (const o of OUTFITS) if (o.test) UNLOCKS["outfit:" + o.id] = { hint: o.hint, test: o.test };
+const CONNOR_BASE = JSON.parse(JSON.stringify(CHARS.connor.spec));

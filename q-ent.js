@@ -81,5 +81,5 @@ Which Disney film features the song "Hakuna Matata"?|The Lion King|The Jungle Bo
 Which band sang "Smells Like Teen Spirit"?|Nirvana|Pearl Jam;Green Day;Radiohead
 In "Shrek", what kind of animal is Donkey's wife?|Dragon|Horse;Ogre;Unicorn
 What is the name of the snowman in "Frozen"?|Olaf|Sven;Kristoff;Hans
-Which "Harry Potter" actor played Hermione Granger?|Emma Watson|Emma Stone;Bonnie Wright;Evanna Lynch|watson|h
+Which "Harry Potter" actor played Hermione Granger?|Emma Watson|Emma Stone;Bonnie Wright;Evanna Lynch|watson|h
 `);

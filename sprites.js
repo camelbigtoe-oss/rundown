@@ -173,6 +173,12 @@ const Sprites = (() => {
       P(t.inner || "#1b1b2b", mid - 2, 17, 4, 14); P(ts, mid - 3, 17, 1, 23); P(ts, mid + 2, 17, 1, 23);
       P(ts, R, 17, 1, 23); P("#9ad", L + 1, 24, 3, 1);
     }
+    if (t.style === "hotdog") {
+      const bun = t.bun || "#d9a35a";
+      P(tc, L, 17, b.tw, 27); P(shade(tc, -0.25), R - 2, 17, 2, 27); P(shade(tc, 0.2), L + 1, 18, 2, 24);
+      P(bun, L - 4, 12, 4, 33); P(bun, R + 1, 12, 4, 33); P(shade(bun, -0.25), R + 4, 12, 1, 33); P(shade(bun, 0.25), L - 4, 13, 1, 30);
+      for (let y = 18; y < 42; y += 2) P("#ffd166", mid - 1 + ((y / 2) % 2 ? 1 : -1), y, 2, 1);
+    }
     if (t.style === "corset") {
       P(sk, L + 1, 17, b.tw - 2, 2); P(sks, L + 1, 18, b.tw - 2, 1);
       P(t.trim || "#6a2a5a", L - bk, 19, b.tw + 2 * bk, 1);
@@ -213,6 +219,7 @@ const Sprites = (() => {
       const ax = side ? R + 1 + bk : L - b.arm - bk;
       const ac = t.style === "cloak" ? shade(tc, -0.1) : tc;
       if (t.style === "cloak") { P(ac, ax, armTop, b.arm, 15); P(sk, ax + (side ? 0 : 1), 33, b.arm - 1, 2); continue; }
+      if (t.style === "hotdog") continue;
       if (t.style === "corset" && !t.sleeve) { P(sk, ax, armTop, b.arm, 12); P(sks, side ? ax + b.arm - 1 : ax, armTop, 1, 12); }
       else if (longSleeve) {
         const ac2 = t.sleeve || ac;
@@ -309,6 +316,30 @@ const Sprites = (() => {
     if (s.goggles) { P("#22252e", 9, 8, 14, 4); P(s.goggles, 11, 9, 4, 2); P(s.goggles, 17, 9, 4, 2); P("#fff", 11, 9, 1, 1); P("#fff", 17, 9, 1, 1); }
     if (s.earring) { P(s.earring, 22, 11, 1, 1); P(s.earring, 9, 11, 1, 1); }
     if (s.pounamu) { P("#2fa36b", mid - 1, 20, 2, 3); P("#7be0a8", mid - 1, 20, 1, 1); P("#3a2a1a", mid - 2, 17, 1, 3); P("#3a2a1a", mid + 1, 17, 1, 3); }
+    if (s.mask) { P(s.mask, 10, 11, 12, 6); P(shade(s.mask, 0.2), 11, 12, 4, 1); }
+    if (s.headband) { P(s.headband, 9, 6, 14, 1); P(s.headband, 23, 6, 3, 1); P(s.headband, 24, 7, 2, 1); }
+    if (s.shades) { P("#111", 11, 9, 4, 2); P("#111", 17, 9, 4, 2); P("#111", 15, 9, 2, 1); P("#fff", 11, 9, 1, 1); P("#fff", 17, 9, 1, 1); }
+    if (s.eyepatch) { P("#111", 17, 8, 4, 3); P("#111", 10, 7, 7, 1); P("#111", 21, 7, 2, 1); }
+    if (s.helmet) {
+      const h = s.helmet;
+      P(h.color, 9, 1, 14, 6); P(h.color, 8, 3, 2, 10); P(h.color, 22, 3, 2, 10); P(shade(h.color, 0.3), 11, 2, 5, 1);
+      P(h.accent || "#fff", 9, 6, 14, 1); P(h.accent || "#fff", 8, 9, 2, 2); P(h.accent || "#fff", 22, 9, 2, 2);
+      if (h.gem) { P(h.gem, 15, 2, 2, 3); P("#fff", 15, 2, 1, 1); }
+      if (h.plume) { P(h.plume, 14, 0, 4, 2); P(h.plume, 16, 0, 5, 1); }
+      if (h.visor) { P(h.visor, 10, 8, 12, 3); P("rgba(255,255,255,.5)", 11, 8, 3, 1); }
+    }
+    if (s.wizardHat) {
+      const w = s.wizardHat;
+      for (let i = 0; i < 6; i++) P(w.color, 15 - i, i, 2 + i * 2, 1);
+      P(w.color, 7, 5, 18, 2); P(shade(w.color, -0.3), 7, 6, 18, 1);
+      P(w.star || "#ffd166", 14, 2, 1, 1); P(w.star || "#ffd166", 18, 4, 1, 1); P(w.star || "#ffd166", 12, 4, 1, 1);
+    }
+    if (s.pirateHat) { P(s.pirateHat, 10, 0, 12, 4); P(s.pirateHat, 7, 3, 18, 3); P("#f2f2f2", 15, 1, 2, 2); P(shade(s.pirateHat, 0.3), 7, 3, 18, 1); }
+    if (t.style === "hotdog") { const bun = t.bun || "#d9a35a"; P(bun, 8, 0, 16, 4); P(bun, 7, 3, 3, 14); P(bun, 22, 3, 3, 14); P(shade(bun, 0.25), 10, 0, 6, 1); }
+    if (s.cannon) {
+      const c = s.cannon, x = R + 1 + bk + b.arm;
+      P(c.color, x - b.arm, 25, b.arm + 3, 7); P(shade(c.color, -0.3), x - b.arm, 31, b.arm + 3, 1); P(c.accent || "#333", x + 2, 26, 1, 5); P("#111", x + 3, 27, 1, 3);
+    }
     if (s.cap) { P(s.cap, 9, 1, 14, 4); P(shade(s.cap, -0.3), 7, 5, 9, 1); P(shade(s.cap, 0.3), 14, 2, 2, 1); }
   }
 
@@ -322,5 +353,6 @@ const Sprites = (() => {
     return u;
   }
 
-  return { url, draw, shade, W, H };
+  const forget = (id) => cache.delete(id);
+  return { url, draw, shade, forget, W, H };
 })();

@@ -5,7 +5,10 @@ const Bank = (() => {
   "use strict";
   const CATS = {
     gk: "General Knowledge", nz: "Aotearoa", geo: "Geography", sci: "Science & Nature",
-    sport: "Sport", ent: "Film, TV & Music", hist: "History",
+    sport: "Sport", ent: "Film & TV", hist: "History", games: "Video Games", food: "Food & Drink",
+    lit: "Literature", art: "Art & Design", music: "Music", words: "Words & Language", myth: "Mythology",
+    space: "Space", animals: "Animals & Nature", tech: "Technology", body: "The Human Body",
+    maths: "Maths & Numbers", cars: "Cars & Transport",
   };
   const all = [];
   const byCat = {};
@@ -18,7 +21,7 @@ const Bank = (() => {
 
   function add(cat, text) {
     (byCat[cat] ||= []);
-    for (const raw of text.split("\n")) {
+    for (const raw of text.replace(/\r/g, "").split("\n")) {
       const line = raw.trim();
       if (!line || line.startsWith("#")) continue;
       const [q, a, w = "", x = "", f = ""] = line.split("|").map((p) => p.trim());
@@ -64,13 +67,25 @@ const Bank = (() => {
     return prev[n];
   }
   // typed answer check: exact after tidying, or a small typo on longer words; numbers must be exact
+  // a typo is forgiven only if every short word (3 letters or fewer) is exact, so "Vitamin A" never passes for "Vitamin D"
+  function typoOK(g, ok, tol) {
+    if (lev(g, ok) > tol) return false;
+    const a = g.split(" "), b = ok.split(" ");
+    if (a.length === b.length) for (let i = 0; i < a.length; i++) if (Math.min(a[i].length, b[i].length) <= 3 && a[i] !== b[i]) return false;
+    return true;
+  }
   function matches(input, item) {
     const g = norm(input); if (!g) return false;
-    for (const ok of [item.a, ...item.x].map(norm)) {
-      if (g === ok) return true;
+    const accepted = [item.a, ...item.x].map(norm);
+    if (accepted.includes(g)) return true;
+    // never accept one of the listed wrong answers, or anything closer to a wrong answer than to a right one
+    const wrongs = (item.w || []).map(norm).filter((w) => !accepted.includes(w));
+    if (wrongs.includes(g)) return false;
+    const nearestWrong = wrongs.length ? Math.min(...wrongs.map((w) => lev(g, w))) : Infinity;
+    for (const ok of accepted) {
       if (/\d/.test(ok)) continue;
       const tol = ok.length >= 9 ? 2 : ok.length >= 5 ? 1 : 0;
-      if (tol && lev(g, ok) <= tol) return true;
+      if (tol && typoOK(g, ok, tol) && lev(g, ok) < nearestWrong) return true;
       // surname-only answers for people ("Hillary" for "Edmund Hillary")
       if (isPerson(item.a) && g.length >= 4) {
         const parts = ok.split(" ");

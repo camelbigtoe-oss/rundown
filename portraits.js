@@ -137,6 +137,21 @@ const Portraits = (() => {
     if (s.monocle) { const g = "#e8c66a"; P(g, 21, 14, 7, 1); P(g, 21, 19, 7, 1); P(g, 21, 14, 1, 6); P(g, 27, 14, 1, 6); P(g, 27, 20, 1, 8); P("rgba(200,230,255,.35)", 22, 15, 5, 4); }
     if (s.goggles) { P("#22252e", 10, 13, 20, 7); P(s.goggles, 12, 15, 6, 3); P(s.goggles, 22, 15, 6, 3); P("#fff", 12, 15, 2, 1); P("#fff", 22, 15, 2, 1); }
     if (s.earring) { P(s.earring, 11, 20, 1, 2); P(s.earring, 28, 20, 1, 2); }
+    if (s.mask) { P(s.mask, 12, 19, 16, 9); P(s.mask, 14, 28, 12, 1); }
+    if (s.headband) { P(s.headband, 9, 10, 22, 2); P(s.headband, 30, 11, 4, 2); }
+    if (s.shades) { P("#111", 12, 15, 7, 4); P("#111", 21, 15, 7, 4); P("#111", 19, 16, 2, 1); P("#fff", 13, 15, 2, 1); P("#fff", 22, 15, 2, 1); }
+    if (s.eyepatch) { P("#111", 21, 14, 7, 5); P("#111", 10, 12, 11, 1); }
+    if (s.helmet) {
+      const h = s.helmet;
+      P(h.color, 9, 1, 22, 10); P(h.color, 7, 6, 4, 18); P(h.color, 29, 6, 4, 18); P(Sprites.shade(h.color, 0.3), 12, 2, 8, 2);
+      P(h.accent || "#fff", 9, 10, 22, 2); P(h.accent || "#fff", 7, 15, 4, 4); P(h.accent || "#fff", 29, 15, 4, 4);
+      if (h.gem) { P(h.gem, 18, 3, 4, 5); P("#fff", 18, 3, 2, 2); }
+      if (h.plume) P(h.plume, 16, 0, 9, 2);
+      if (h.visor) { P(h.visor, 11, 13, 18, 6); P("rgba(255,255,255,.5)", 12, 13, 5, 2); }
+    }
+    if (s.wizardHat) { const w = s.wizardHat; for (let i = 0; i < 9; i++) P(w.color, 19 - i, i, 2 + i * 2, 1); P(w.color, 6, 8, 28, 3); P(w.star || "#ffd166", 18, 3, 2, 2); P(w.star || "#ffd166", 23, 6, 1, 1); }
+    if (s.pirateHat) { P(s.pirateHat, 11, 0, 18, 6); P(s.pirateHat, 6, 5, 28, 4); P("#f2f2f2", 18, 1, 4, 3); }
+    if (t.style === "hotdog") { const bun = t.bun || "#d9a35a"; P(bun, 8, 0, 24, 6); P(bun, 6, 4, 5, 36); P(bun, 29, 4, 5, 36); P(tc, 11, 30, 18, 10); P("#ffd166", 18, 32, 4, 1); P("#ffd166", 16, 35, 4, 1); P("#ffd166", 18, 38, 4, 1); }
     if (s.cap) { P(s.cap, 10, 2, 20, 8); P(shade(s.cap, 0.25), 13, 3, 8, 1); P(shade(s.cap, -0.35), 7, 9, 16, 2); P(hc, 9, 10, 3, 6); P(hc, 28, 10, 3, 5); }
   }
 
@@ -146,5 +161,6 @@ const Portraits = (() => {
     paint(c.getContext("2d"), spec);
     const u = c.toDataURL("image/png"); cache.set(id, u); return u;
   }
-  return { url };
+  const forget = (id) => cache.delete(id);
+  return { url, forget };
 })();
