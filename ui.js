@@ -65,6 +65,9 @@ const UI = (() => {
     const r = RPG.get(id); if (!r) return "";
     return `<div class="statgrid ${small ? "small" : ""}">${RPG.CATS.map((k) => `<div class="st"><span>${RPG.SHORT[k]}</span><div class="sbar"><i style="width:${(r.stats[k] / RPG.MAX) * 100}%"></i></div><b>${r.stats[k]}</b></div>`).join("")}</div>`;
   }
+  function unlockCheck() {
+    RPG.checkUnlocks().forEach((id, i) => setTimeout(() => { shout("UNLOCKED!", "lvl"); toast(`New character unlocked: ${CHARS[id].name}!`, 3000); }, i * 1500));
+  }
   function levelUp(up) { if (!up) return; shout("LEVEL UP!", "lvl"); toast(`${CHARS[up.id].name} reached Lv ${up.lv}!`, 2400); }
   function stars(n) { return `<span class="stars" aria-label="${n} of 4">${"★".repeat(n)}<i>${"★".repeat(4 - n)}</i></span>`; }
   function toast(msg, ms = 1600) { const t = $("#toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("on"), ms); }
@@ -118,7 +121,7 @@ const UI = (() => {
           <div><small>Won</small><b>${money(rec.total)}</b></div>
           <div><small>Best</small><b>${money(rec.best)}</b></div>
         </div>
-        <div class="title-foot"><span>Made for Connor</span><button class="link" data-act="sound">${Sfx.on ? "Sound on" : "Sound off"}</button></div>
+        <div class="title-foot"><span></span><button class="link" data-act="sound">${Sfx.on ? "Sound on" : "Sound off"}</button></div>
       </section>`);
     clearInterval(titleTimer);
     titleTimer = setInterval(() => {
@@ -134,7 +137,10 @@ const UI = (() => {
   function roster() {
     screen = "roster";
     const card = (id) => {
-      const r = RPG.get(id), c = CHARS[id], pct = Math.min(100, (r.xp / RPG.need(r.lv)) * 100);
+      const c = CHARS[id];
+      if (c.hidden && !RPG.isUnlocked(id)) return `<div class="char-card win locked">
+        <div class="cc-top">${portrait(id, "pt-l")}<div class="cc-id"><b>???</b><small>Hidden character</small><div class="lv"><span>Locked</span><em>${esc(UNLOCKS[id].hint)}</em></div></div></div></div>`;
+      const r = RPG.get(id), pct = Math.min(100, (r.xp / RPG.need(r.lv)) * 100);
       return `<div class="char-card win ${id === TEAM.captain ? "captain" : ""}">
         <div class="cc-top">${portrait(id, "pt-l")}
           <div class="cc-id"><b>${esc(c.name)}</b><small>${esc(c.tag)}</small>
@@ -143,14 +149,18 @@ const UI = (() => {
           </div>
         </div>
         ${statBars(id)}
+        ${c.custom ? `<button class="link" data-act="del-custom" data-id="${id}">Delete character</button>` : ""}
       </div>`;
     };
     show(`${bar("THE TEAM")}
       <section class="roster">
         <div class="team-head win"><small>Quiz team</small><b>${esc(TEAM.name)}</b><span>Stats run 1 to 255 and grow as you answer questions in that subject. Every right answer earns XP.</span></div>
         ${TEAM.members.map(card).join("")}
+        <button class="btn big gold" data-act="create"><b>+ CREATE A CHARACTER</b></button>
         <h2 class="h">Other contestants</h2>
-        ${CHAR_ORDER.filter((i) => !TEAM.members.includes(i)).map(card).join("")}
+        ${CHAR_ORDER.filter((i) => !TEAM.members.includes(i) && !CHARS[i].hidden).map(card).join("")}
+        <h2 class="h">Hidden characters</h2>
+        ${CHAR_ORDER.filter((i) => CHARS[i].hidden).map(card).join("")}
       </section>`);
   }
 
@@ -208,6 +218,79 @@ const UI = (() => {
     </button>`;
   }
 
+  // ---------- character creator ----------
+  const CR = {
+    bodies: [{ name: "Bombshell", build: "curvy", bust: 2 }, { name: "Hourglass", build: "slim", bust: 2 }, { name: "Athletic", build: "avg", bust: 2, strong: 1 }],
+    hair: [["long", "Long"], ["bob", "Bob"], ["ponytail", "Ponytail"], ["bun", "Bun"], ["streak", "Streak"], ["curly", "Curly"]],
+    hairCols: ["#141018", "#5a3a22", "#a8602f", "#f2cf73", "#ff4d2a", "#ff6fae", "#5a2a8a", "#3fa7ff", "#e8e8f0"],
+    skins: ["#f6dccb", "#f1c4a3", "#d9a07a", "#b0764f", "#8a5a3c", "#5e3c2a"],
+    eyes: ["#3a2a5a", "#2d5a7a", "#3a6a3a", "#8a3ad0", "#ff4d5e", "#ffb020"],
+    outfits: [["goth", "Goth corset"], ["pilot", "Pilot suit"], ["dress", "Party dress"], ["casual", "Cosy casual"], ["office", "Sharp blazer"]],
+    cols: ["#1a1020", "#b3132b", "#2f6fb0", "#2fbf96", "#ffd166", "#ff6f8e", "#6a3aa0", "#eef2f6"],
+  };
+  let draft = null;
+  function draftSpec(d) {
+    const b = CR.bodies[d.body], col = CR.cols[d.col];
+    const s = { build: b.build, bust: b.bust, strong: b.strong, skin: CR.skins[d.skin], hair: CR.hairCols[d.hairCol], hairStyle: CR.hair[d.hair][0], eye: CR.eyes[d.eye], lashes: 1, mouth: "smile", blush: 1 };
+    const o = CR.outfits[d.outfit][0];
+    if (o === "goth") Object.assign(s, { lips: "#5a0a2a", top: { style: "corset", color: col, trim: "#7a2a6a" }, bottom: { style: "skirt", color: "#141018" }, socks: { color: "#111", net: 1, from: 37 }, shoes: { style: "tall", color: "#111" } });
+    if (o === "pilot") Object.assign(s, { top: { style: "bodysuit", color: col, accent: col === "#b3132b" ? "#eef2f6" : "#ff4d5e" }, bottom: { style: "tights", color: col }, shoes: { style: "boot", color: "#2a2a3a", sole: "#111" } });
+    if (o === "dress") Object.assign(s, { top: { style: "dress", color: col, trim: "#ffd166" }, bottom: { style: "none", color: "#000" }, shoes: { style: "heel", color: "#141014" } });
+    if (o === "casual") Object.assign(s, { top: { style: "cardigan", color: col, inner: "#f4ead6" }, bottom: { style: "jeans", color: "#5b7bb3" }, shoes: { style: "low", color: "#f7f7f7", sole: "#ddd" } });
+    if (o === "office") Object.assign(s, { top: { style: "blazer", color: col, inner: "#ffffff" }, bottom: { style: "skirt", color: "#1f2233" }, shoes: { style: "heel", color: "#141014" } });
+    if (d.glasses) s.glasses = "#2b2b3b";
+    if (d.choker) s.choker = "#111";
+    if (d.earrings) s.earring = "#ffd166";
+    return s;
+  }
+  function creator(reset) {
+    screen = "create";
+    if (reset || !draft) draft = { name: "", body: 0, hair: 0, hairCol: 0, skin: 1, eye: 0, outfit: 0, col: 0, glasses: false, choker: true, earrings: false, spec: "gk" };
+    const d = draft, spec = draftSpec(d);
+    const chips = (k, list, label) => `<div class="cr-row"><span>${label}</span><div class="chips">${list.map((x, i) => `<button class="chip ${d[k] === i ? "on" : ""}" data-cr="${k}" data-v="${i}">${esc(Array.isArray(x) ? x[1] : x.name)}</button>`).join("")}</div></div>`;
+    const sw = (k, list, label) => `<div class="cr-row"><span>${label}</span><div class="chips">${list.map((c, i) => `<button class="sw ${d[k] === i ? "on" : ""}" style="--c:${c}" data-cr="${k}" data-v="${i}" aria-label="${label} ${i + 1}"></button>`).join("")}</div></div>`;
+    show(`${bar("CREATE A CHARACTER")}
+      <section class="panel creator">
+        <div class="cr-preview">
+          <div class="cr-body"><img class="spr big" src="${Sprites.url("draft", spec, true)}" alt=""></div>
+          <div class="cr-face"><img class="pt pt-l" src="${Portraits.url("draft", spec, true)}" alt=""></div>
+        </div>
+        <label class="lbl">Name<input id="cr-name" maxlength="14" value="${esc(d.name)}" placeholder="Name her"></label>
+        ${chips("body", CR.bodies, "Body")}
+        ${chips("hair", CR.hair, "Hair")}
+        ${sw("hairCol", CR.hairCols, "Hair colour")}
+        ${sw("skin", CR.skins, "Skin")}
+        ${sw("eye", CR.eyes, "Eyes")}
+        ${chips("outfit", CR.outfits, "Outfit")}
+        ${sw("col", CR.cols, "Outfit colour")}
+        <div class="cr-row"><span>Extras</span><div class="chips">
+          <button class="chip ${d.glasses ? "on" : ""}" data-cr="glasses">Glasses</button>
+          <button class="chip ${d.choker ? "on" : ""}" data-cr="choker">Choker</button>
+          <button class="chip ${d.earrings ? "on" : ""}" data-cr="earrings">Earrings</button>
+        </div></div>
+        <div class="cr-row"><span>Best subject</span><div class="chips">${RPG.CATS.map((k) => `<button class="chip ${d.spec === k ? "on" : ""}" data-cr="spec" data-v="${k}">${esc(Bank.CATS[k])}</button>`).join("")}</div></div>
+        <button class="btn big gold" data-cr="save"><b>SAVE CHARACTER</b></button>
+        <p class="hint">She starts at Lv 10 with 200 in her best subject and levels up as you play.</p>
+      </section>`);
+    $("#cr-name").addEventListener("input", (e) => { d.name = e.target.value; });
+  }
+  app.addEventListener("click", (e) => {
+    const t = e.target.closest("[data-cr]"); if (!t || screen !== "create") return;
+    Sfx.tap();
+    const k = t.dataset.cr, d = draft;
+    if (k === "save") {
+      const name = (d.name || "").trim(); if (!name) { toast("Give her a name first"); $("#cr-name").focus(); return; }
+      const stats = Object.fromEntries(RPG.CATS.map((c) => [c, c === d.spec ? 200 : 120]));
+      const id = "c" + Date.now().toString(36);
+      RPG.addCustom({ id, name, tag: `Custom. Best at ${Bank.CATS[d.spec]}.`, spec: draftSpec(d), stats });
+      toast(`${name} joined the roster!`); draft = null; roster(); return;
+    }
+    if (["glasses", "choker", "earrings"].includes(k)) d[k] = !d[k];
+    else if (k === "spec") d.spec = t.dataset.v;
+    else d[k] = +t.dataset.v;
+    const y = scrollY; creator(); scrollTo(0, y);
+  });
+
   // ---------- running a local game ----------
   function beginLocal() {
     const s = setup;
@@ -216,7 +299,7 @@ const UI = (() => {
     SAVE("rd.hunter", s.hunter);
     role = "local"; endLocal();
     lastKey = ""; lastState = null; skew = 0;
-    game = new Engine.Game({ mode: s.mode, hunter: s.hunter, players: s.players.map((p) => ({ id: uid(), name: p.name, char: p.char, stats: RPG.stats(p.char) })) }, onState);
+    game = new Engine.Game({ mode: s.mode, hunter: s.hunter, players: s.players.map((p) => ({ id: uid(), name: p.name, char: p.char, stats: RPG.stats(p.char), perk: CHARS[p.char].perk || null })) }, onState);
   }
   function endLocal() { if (game) { game.destroy(); game = null; } }
   function onState(s) {
@@ -295,7 +378,7 @@ const UI = (() => {
           </div>
           <div class="timebar"><i data-bar="${c.end}" data-len="${Engine.CASH_TIME}"></i></div>
           ${qcard(c, fresh)}
-          <div class="opts four">${c.opts.map((o, i) => optBtn("cash", o, i, mine, c.strike, cur.name)).join("")}</div>
+          <div class="opts four">${c.opts.map((o, i) => optBtn("cash", o, i, mine, c, cur.name)).join("")}</div>
           ${c.fb ? `<div class="fb ${c.fb.ok ? "ok" : "no"}" data-k="${c.fb.k}">${c.fb.ok ? "✓ RIGHT" : `✗ It was <b>${esc(c.fb.a)}</b>`}</div>` : ""}
           ${mine ? "" : `<div class="watch">${esc(cur.name)} is playing</div>`}
           ${hostSkip(s)}
@@ -359,7 +442,7 @@ const UI = (() => {
           </div>
           <div class="timebar"><i data-bar="${f.end}" data-len="${Engine.FINAL_TIME}"></i></div>
           ${qcard(f.cur, fresh)}
-          <div class="opts four ${locked ? "locked" : ""}" ${locked ? `data-lock="${f.lock}"` : ""}>${f.cur.opts.map((o, i) => optBtn("final", o, i, mine, f.cur.strike, "Team")).join("")}</div>
+          <div class="opts four ${locked ? "locked" : ""}" ${locked ? `data-lock="${f.lock}"` : ""}>${f.cur.opts.map((o, i) => optBtn("final", o, i, mine, f.cur, (s.players.find((pl) => pl.result === "home" && pl.perk === "hp") || {}).name || "Team")).join("")}</div>
           ${f.fb ? `<div class="fb ${f.fb.ok ? "ok" : "no"}" data-k="${f.fb.k}">${f.fb.ok ? "✓ STEP!" : `✗ It was <b>${esc(f.fb.a)}</b>`}</div>` : ""}
           ${mine ? "" : `<div class="watch">The team is running</div>`}
         </section>`;
@@ -407,9 +490,13 @@ const UI = (() => {
     const cur = s.players[s.turn]; if (!cur || cur.id === me.id) return "";
     return `<button class="link skip" data-send="skip">Skip ${esc(cur.name)} (dropped out?)</button>`;
   }
-  function optBtn(act, o, i, mine, strike, who) {
-    const struck = strike === i;
-    return `<button class="opt ${struck ? "struck" : ""}" data-send="${act}" data-v="${i}" ${mine && !struck ? "" : "disabled"}><em>${LETTERS[i]}</em><span class="ot">${esc(o)}</span>${struck ? `<span class="hunch">${esc(who)}'s hunch: not this</span>` : ""}</button>`;
+  function strikeNote(q, i, who) {
+    const st = q.strike || []; if (!st.includes(i) || st[0] !== i) return "";
+    return `<span class="hunch ${q.knows ? "knows" : ""}">${q.knows ? `${esc(who)} never misses Harry Potter` : `${esc(who)}'s hunch: not this`}</span>`;
+  }
+  function optBtn(act, o, i, mine, q, who) {
+    const struck = (q.strike || []).includes(i);
+    return `<button class="opt ${struck ? "struck" : ""}" data-send="${act}" data-v="${i}" ${mine && !struck ? "" : "disabled"}><em>${LETTERS[i]}</em><span class="ot">${esc(o)}</span>${strikeNote(q, i, who)}</button>`;
   }
   function qcard(q, fresh) {
     return `<div class="qcard ${fresh ? "flip" : ""}"><div class="qcat">${esc(Bank.CATS[q.c] || "")}</div><p>${esc(q.q)}</p></div>`;
@@ -431,7 +518,7 @@ const UI = (() => {
     const optCls = (i) => {
       const c = ["opt"];
       if (b.pick === i) c.push("picked");
-      if (b.strike === i) c.push("struck");
+      if ((b.strike || []).includes(i)) c.push("struck");
       if (rev) { if (i === b.ans) c.push("right"); else if (b.pick === i) c.push("wrong"); }
       return c.join(" ");
     };
@@ -439,8 +526,8 @@ const UI = (() => {
       <div class="board">${rows.join("")}</div>
       <div class="board-side">
         ${qcard(b, fresh)}
-        <div class="opts three">${b.opts.map((o, i) => `<button class="${optCls(i)}" data-send="board" data-v="${i}" ${mine && st === "ask" && b.strike !== i ? "" : "disabled"}>
-          <em>${LETTERS[i]}</em><span class="ot">${esc(o)}</span>${b.strike === i && !rev ? `<span class="hunch">${esc(cur.name)}'s hunch: not this</span>` : ""}${rev && b.hp === i ? `<span class="htag">${esc(HUNTERS[s.hunter].short)}</span>` : ""}${rev && b.pick === i ? `<span class="ptag">${esc(cur.name)}</span>` : ""}</button>`).join("")}</div>
+        <div class="opts three">${b.opts.map((o, i) => `<button class="${optCls(i)}" data-send="board" data-v="${i}" ${mine && st === "ask" && !(b.strike || []).includes(i) ? "" : "disabled"}>
+          <em>${LETTERS[i]}</em><span class="ot">${esc(o)}</span>${!rev ? strikeNote(b, i, cur.name) : ""}${rev && b.hp === i ? `<span class="htag">${esc(HUNTERS[s.hunter].short)}</span>` : ""}${rev && b.pick === i ? `<span class="ptag">${esc(cur.name)}</span>` : ""}</button>`).join("")}</div>
         <div class="board-msg">${st === "lock" ? `<span class="thinking">${esc(HUNTERS[s.hunter].short)} is locking in<i>.</i><i>.</i><i>.</i></span>` : st === "ask" ? (mine ? "Pick your answer" : `${esc(cur.name)} is thinking…`) : ""}</div>
         ${rev ? bubble(s.line) : ""}
       </div>
@@ -510,10 +597,11 @@ const UI = (() => {
   function sounds(p, s) {
     if (!p) return;
     const cur = s.players[s.turn], mineP = (pl) => pl && (role === "local" || pl.id === me.id);
-    if (s.cash && s.cash.fb && s.cash.fb.ok && (!p.cash || !p.cash.fb || p.cash.fb.k !== s.cash.fb.k) && mineP(cur)) levelUp(RPG.gain(cur.char, s.cash.fb.c, 1));
-    if (s.board && p.board && s.board.step === "reveal" && p.board.step !== "reveal" && s.board.pick === s.board.ans && mineP(cur)) levelUp(RPG.gain(cur.char, s.board.c, 2));
+    if (s.cash && s.cash.fb && s.cash.fb.ok && (!p.cash || !p.cash.fb || p.cash.fb.k !== s.cash.fb.k) && mineP(cur)) { RPG.bump("correct"); levelUp(RPG.gain(cur.char, s.cash.fb.c, 1)); }
+    if (s.board && p.board && s.board.step === "reveal" && p.board.step !== "reveal" && s.board.pick === s.board.ans && mineP(cur)) { RPG.bump("correct"); levelUp(RPG.gain(cur.char, s.board.c, 2)); }
     if (s.final && s.final.fb && s.final.fb.ok && (!p.final || !p.final.fb || p.final.fb.k !== s.final.fb.k)) {
       const who = s.players.filter((pl) => pl.result === "home" && (s.final.fb.who ? pl.id === s.final.fb.who : true) && mineP(pl));
+      if (who.length) RPG.bump("correct");
       for (const pl of who) levelUp(RPG.gain(pl.char, s.final.fb.c, 1));
     }
     if (s.phase === "turnEnd" && p.phase !== "turnEnd") { const r = cur.result; if (r === "home") shout("SAFE!", "safe"); else if (r === "caught") shout("GOTCHA!", "gotcha"); }
@@ -551,6 +639,10 @@ const UI = (() => {
     const won = mine.reduce((a, p) => a + (p.won || 0), 0);
     rec.games++; if (s.won && won > 0) rec.wins++; rec.total += won; rec.best = Math.max(rec.best, won);
     SAVE("rd.rec", rec);
+    if (s.won && won > 0) { RPG.beat(s.hunter); if (s.mode === "solo") RPG.bump("soloWins"); }
+    RPG.bump("total", won);
+    RPG.bump("caught", mine.filter((p) => p.result === "caught").length);
+    setTimeout(unlockCheck, 1500);
   }
 
   // ---------- online ----------
@@ -577,7 +669,7 @@ const UI = (() => {
     saveMe();
     const code = Net.code();
     role = "host";
-    lobby = { phase: "lobby", code, host: me.id, hunter: LS("rd.hunter", "archivist"), players: [{ id: me.id, name: me.name, char: me.char, stats: RPG.stats(me.char) }], now: Date.now() };
+    lobby = { phase: "lobby", code, host: me.id, hunter: LS("rd.hunter", "archivist"), players: [{ id: me.id, name: me.name, char: me.char, stats: RPG.stats(me.char), perk: CHARS[me.char].perk || null }], now: Date.now() };
     lobbyView();
     try {
       await Net.open(code, me.id, {
@@ -585,8 +677,8 @@ const UI = (() => {
           if (!lobby || game) { if (game) Net.sendState(game.s); return; }
           const ex = lobby.players.find((x) => x.id === p.pid);
           const st = p.stats && typeof p.stats === "object" ? Object.fromEntries(RPG.CATS.map((k) => [k, Math.max(0, Math.min(RPG.MAX, +p.stats[k] || 0))])) : null;
-          if (ex) { ex.name = p.name; ex.char = p.char; ex.stats = st; }
-          else if (lobby.players.length < 4) lobby.players.push({ id: p.pid, name: String(p.name).slice(0, 14), char: CHARS[p.char] ? p.char : "aroha", stats: st });
+          if (ex) { ex.name = p.name; ex.char = p.char; ex.stats = st; ex.perk = (CHARS[p.char] || {}).perk || null; }
+          else if (lobby.players.length < 4) lobby.players.push({ id: p.pid, name: String(p.name).slice(0, 14), char: CHARS[p.char] ? p.char : "aroha", stats: st, perk: (CHARS[p.char] || {}).perk || null });
           pushLobby();
         },
         bye: (p) => { if (lobby && !game) { lobby.players = lobby.players.filter((x) => x.id !== p.pid); pushLobby(); } },
@@ -680,15 +772,18 @@ const UI = (() => {
         const p = list[i]; const nameInput = $(`input.name[data-i="${i}"]`);
         const typed = nameInput ? nameInput.value.trim() : p.name;
         const wasDefault = !typed || typed === CHARS[p.char].name;
-        p.char = CHAR_ORDER[(CHAR_ORDER.indexOf(p.char) + dir + CHAR_ORDER.length) % CHAR_ORDER.length];
+        const avail = CHAR_ORDER.filter(RPG.available);
+        p.char = avail[(avail.indexOf(p.char) + dir + avail.length) % avail.length];
         p.name = wasDefault ? CHARS[p.char].name : typed;
         if (screen === "online") { me.char = p.char; me.name = p.name; SAVE("rd.me", me); onlineScreen(); } else renderSetup();
         break;
       }
-      case "more": syncNames(); { const used = setup.players.map((p) => p.char); const c = CHAR_ORDER.find((x) => !used.includes(x)) || "aroha"; setup.players.push({ char: c, name: CHARS[c].name }); } renderSetup(); break;
+      case "more": syncNames(); { const used = setup.players.map((p) => p.char); const c = CHAR_ORDER.find((x) => !used.includes(x) && RPG.available(x)) || "aroha"; setup.players.push({ char: c, name: CHARS[c].name }); } renderSetup(); break;
       case "less": syncNames(); setup.players.pop(); renderSetup(); break;
       case "to-hunter": syncNames(); setup.step = "hunter"; renderSetup(); break;
       case "begin": beginLocal(); break;
+      case "create": creator(true); break;
+      case "del-custom": if (confirm("Delete this character?")) { RPG.removeCustom(t.dataset.id); roster(); } break;
       case "again":
         if (role === "host") { endLocal(); lastState = null; lobby.phase = "lobby"; pushLobby(); }
         else if (setup) beginLocal(); else title();
@@ -711,5 +806,5 @@ const UI = (() => {
   title();
   if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
 
-  return { esc, spr, portrait, vn, bar, show, toast, title, money, LS, SAVE, me, statBars, levelUp, shout, typeIn };
+  return { esc, spr, portrait, vn, bar, show, toast, title, money, LS, SAVE, me, statBars, levelUp, shout, typeIn, unlockCheck };
 })();

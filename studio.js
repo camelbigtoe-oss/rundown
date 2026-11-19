@@ -108,60 +108,106 @@ const Studio = (() => {
     g.fillStyle = grd; g.fillRect(0, 0, W, H);
   }
 
-  // ---------- pub ----------
-  const SKIN = ["#e9b996", "#d39b78", "#b07a58", "#8a5a40", "#6a4432"];
+  // ---------- pub: Phat Eddie's on quiz night ----------
+  // Warm anime pub interior: a big window onto the dusk city with the neon sign in it,
+  // fairy lights, timber and green walls, brass beer taps and hanging plants.
   function buildPub() {
-    const r = rng(42), shelves = [];
-    for (let s = 0; s < 3; s++) {
-      const row = [];
-      for (let x = 4; x < W - 4; x += 3 + Math.floor(r() * 2)) row.push({ x, h: 6 + Math.floor(r() * 6), c: ["#3f8a52", "#8a4a26", "#d8b25a", "#7a2a40", "#e8e0c8", "#4a6aa0", "#c8702a"][Math.floor(r() * 7)], neck: r() < 0.7 });
-      shelves.push(row);
+    const r = rng(42);
+    const c = document.createElement("canvas"); c.width = W; c.height = H;
+    const x = c.getContext("2d");
+    const P = (col, a, b, w, h) => { x.fillStyle = col; x.fillRect(a, b, w, h); };
+    // walls: deep green above, timber panelling below
+    const wainY = Math.floor(H * 0.58);
+    for (let y = 0; y < wainY; y++) { const k = y / wainY; P(k < 0.5 ? "#1e3a36" : "#1a332f", 0, y, W, 1); }
+    for (let i = 0; i < W; i += 4) P(i % 8 ? "rgba(255,255,255,.02)" : "rgba(0,0,0,.08)", i, 0, 2, wainY); // wallpaper stripe
+    P("#5a3418", 0, wainY - 3, W, 3); P("#8a5428", 0, wainY - 3, W, 1);
+    for (let i = 0; i < W; i += 12) { P("#4a2a14", i, wainY, 12, H - wainY); P("#5c361a", i + 1, wainY + 2, 10, H - wainY - 4); P("#3a2010", i, wainY, 1, H - wainY); }
+    // ceiling beam
+    P("#3a2010", 0, 0, W, 6); P("#5a3418", 0, 6, W, 2);
+    // the big window with the city outside
+    const ww = Math.min(W - 24, Math.floor(W * 0.62)), wh = Math.floor(H * 0.3), wx = Math.floor((W - ww) / 2), wy = 18;
+    const sky = ["#2b1c6e", "#47238a", "#7a2f96", "#c0418f", "#ff6f8e", "#ffa07a"];
+    for (let y = 0; y < wh; y++) P(sky[Math.min(sky.length - 1, Math.floor((y / wh) * sky.length))], wx, wy + y, ww, 1);
+    const hz = wy + Math.floor(wh * 0.78), sunR = Math.floor(ww * 0.14), sunX = wx + Math.floor(ww * 0.7);
+    for (let y = -sunR; y < 0; y++) { if (y > -sunR * 0.5 && (-y) % 3 === 0) continue; const w = Math.floor(Math.sqrt(sunR * sunR - y * y)); P(y < -sunR * 0.5 ? "#ffe39a" : "#ffb070", sunX - w, hz + y, w * 2, 1); }
+    const wins = [];
+    for (let i = wx; i < wx + ww;) { const bw = 4 + Math.floor(r() * 7), bh = 5 + Math.floor(r() * wh * 0.45); P("#1a1140", i, hz - bh, bw, bh); for (let yy = hz - bh + 2; yy < hz - 1; yy += 3) for (let xx = i + 1; xx < i + bw - 1; xx += 2) if (r() < 0.3) wins.push({ x: xx, y: yy, ph: r() * 40 }); i += bw; }
+    P("#120c2c", wx, hz, ww, wy + wh - hz);
+    // window frame and panes
+    P("#6b4426", wx - 3, wy - 3, ww + 6, 3); P("#6b4426", wx - 3, wy + wh, ww + 6, 4); P("#6b4426", wx - 3, wy, 3, wh); P("#6b4426", wx + ww, wy, 3, wh);
+    P("#8a5a30", wx - 4, wy + wh, ww + 8, 1);
+    for (let i = 1; i < 3; i++) P("#5a3418", wx + Math.floor((ww * i) / 3), wy, 2, wh);
+    P("#5a3418", wx, wy + Math.floor(wh * 0.45), ww, 2);
+    P("rgba(255,255,255,.07)", wx + 3, wy + 2, 2, wh - 4); P("rgba(255,255,255,.05)", wx + 6, wy + 2, 1, wh - 4);
+    // shelves of bottles either side of the window
+    for (const side of [0, 1]) {
+      const sx0 = side ? wx + ww + 6 : 3, sw = (side ? W - 3 : wx - 6) - sx0;
+      if (sw < 8) continue;
+      for (let s = 0; s < 3; s++) {
+        const sy = wy + 10 + s * Math.floor(wh / 3);
+        P("#6b4426", sx0, sy, sw, 2);
+        for (let bx = sx0 + 1; bx < sx0 + sw - 2; bx += 3 + Math.floor(r() * 2)) {
+          const bh2 = 5 + Math.floor(r() * 5), col = ["#3f8a52", "#c8702a", "#d8b25a", "#7a2a40", "#4a6aa0", "#e8e0c8"][Math.floor(r() * 6)];
+          P(col, bx, sy - bh2, 2, bh2); P(col, bx, sy - bh2 - 2, 1, 2); P("rgba(255,255,255,.35)", bx, sy - bh2 + 1, 1, 2);
+        }
+      }
     }
-    const punters = [];
-    for (let x = -4; x < W + 6; x += 13) punters.push({ x: x + Math.floor(r() * 4), skin: SKIN[Math.floor(r() * SKIN.length)], hair: ["#1d140f", "#3b2414", "#7a4a22", "#d8b070", "#222", "#c86a3a"][Math.floor(r() * 6)], shirt: ["#3a4a8a", "#8a3a4a", "#3a7a5a", "#7a5a3a", "#5a3a7a"][Math.floor(r() * 5)], ph: r() * 6.28, sp: 0.2 + r() * 0.3, pint: r() < 0.7 });
-    return { shelves, punters };
+    // chalkboard and a dartboard on the panelling
+    const cbw = 40, cbx = 8, cby = wainY - 34;
+    P("#6b4426", cbx - 2, cby - 2, cbw + 4, 28); P("#1f2a24", cbx, cby, cbw, 24);
+    x.font = "6px DotGothic16, monospace"; x.textBaseline = "middle"; x.fillStyle = "rgba(240,240,230,.85)";
+    x.fillText("QUIZ NITE", cbx + 4, cby + 7); x.fillStyle = "rgba(255,209,102,.85)"; x.fillText("TUES 7PM", cbx + 4, cby + 17);
+    const dx = W - 20, dy = wainY - 20;
+    for (const [rr, col] of [[10, "#1a1a1a"], [8, "#e8dcc0"], [6, "#1a1a1a"], [4, "#c0392b"], [2, "#2e8b57"], [1, "#c0392b"]]) { x.fillStyle = col; x.beginPath(); x.arc(dx, dy, rr, 0, 6.29); x.fill(); }
+    // bar counter with brass taps and stools
+    const cy = Math.floor(H * 0.78);
+    P("#2a160a", 0, cy - 2, W, 2); P("#8a5428", 0, cy, W, 3); P("#b87a3a", 0, cy, W, 1);
+    P("#4a2812", 0, cy + 3, W, H - cy - 3);
+    for (let i = 0; i < W; i += 14) { P("#3a1e0c", i, cy + 5, 1, H - cy); P("rgba(255,200,120,.06)", i + 2, cy + 5, 10, H - cy); }
+    P("#c9a24a", 0, cy + 12, W, 1);
+    const tx = Math.floor(W / 2) - 16;
+    for (let i = 0; i < 5; i++) { const px = tx + i * 8; P("#d8b25a", px, cy - 14, 2, 14); P("#fff1a8", px, cy - 14, 1, 10); P(["#e0303f", "#3fb0d8", "#2fbf96", "#ffd166", "#ff6f8e"][i], px - 1, cy - 20, 4, 6); }
+    for (let i = 0; i < W; i += 30) { P("#2a160a", i + 8, cy + 14, 2, H - cy); P("#7a2a30", i + 4, cy + 10, 10, 3); }
+    return { c, wins, wainY, wx, ww, wy, wh };
   }
   function pubScene(t) {
     pub ||= buildPub();
-    for (let x = 0; x < W; x += 8) { g.fillStyle = (x / 8) % 2 ? "#3a2416" : "#422a18"; g.fillRect(x, 0, 8, H); g.fillStyle = "#2a180e"; g.fillRect(x, 0, 1, H); }
-    const by = 34, bh = Math.floor(H * 0.42);
-    g.fillStyle = "#1c2a32"; g.fillRect(2, by, W - 4, bh);
-    pub.shelves.forEach((row, s) => {
-      const sy = by + 14 + s * Math.floor(bh / 3);
-      g.fillStyle = "#6b4426"; g.fillRect(2, sy, W - 4, 2);
-      for (const b of row) {
-        g.fillStyle = b.c; g.fillRect(b.x, sy - b.h, 2, b.h);
-        if (b.neck) g.fillRect(b.x, sy - b.h - 2, 1, 2);
-        g.fillStyle = "rgba(255,255,255,.3)"; g.fillRect(b.x, sy - b.h + 1, 1, 2);
+    g.drawImage(pub.c, 0, 0);
+    for (const w of pub.wins) { if (!reduce && Math.sin(t * 0.3 + w.ph) > 0.9) continue; g.fillStyle = "#ffd27a"; g.fillRect(w.x, w.y, 1, 1); }
+    // neon sign hanging in the window
+    const flick = !reduce && Math.sin(t * 7) > 0.995 ? 0.5 : 1;
+    const sx = pub.wx + Math.floor(pub.ww / 2), sy = pub.wy + Math.floor(pub.wh * 0.22);
+    g.font = "8px DotGothic16, monospace"; g.textAlign = "center"; g.textBaseline = "middle";
+    g.fillStyle = `rgba(255,80,160,${0.35 * flick})`; g.fillRect(sx - 34, sy - 7, 68, 14);
+    g.fillStyle = `rgba(255,80,160,${0.6 * flick})`; g.fillText("PHAT EDDIE'S", sx + 1, sy + 1);
+    g.fillStyle = `rgba(255,228,242,${flick})`; g.fillText("PHAT EDDIE'S", sx, sy);
+    g.textAlign = "left";
+    // fairy lights strung in loops under the beam
+    const cols = ["#ffd166", "#ff6f8e", "#6fe3ff", "#6ff0c8"];
+    for (let i = 0, x0 = 0; x0 < W; i++, x0 += 26) {
+      for (let k = 0; k <= 26; k += 2) {
+        const yy = 9 + Math.round(Math.sin((k / 26) * Math.PI) * 6);
+        g.fillStyle = "rgba(20,10,4,.8)"; g.fillRect(x0 + k, yy, 1, 1);
+        if (k % 6 === 0) {
+          const on = reduce || Math.sin(t * 1.2 + i + k) > -0.4;
+          const c = cols[(i + k / 6) % cols.length];
+          g.fillStyle = on ? c : "rgba(255,255,255,.15)"; g.fillRect(x0 + k, yy + 1, 1, 2);
+          if (on) { g.fillStyle = c.replace("#", "#") + "33"; g.fillRect(x0 + k - 1, yy, 3, 4); }
+        }
       }
-    });
-    for (let i = 0; i < 4; i++) {
-      const lx = ((i + 0.5) / 4) * W;
-      g.fillStyle = "#111"; g.fillRect(lx, 0, 1, 14); g.fillRect(lx - 4, 14, 9, 3);
-      g.fillStyle = "#ffd27a"; g.fillRect(lx - 2, 17, 5, 1);
-      const grd = g.createRadialGradient(lx, 18, 1, lx, 44, 52);
-      grd.addColorStop(0, "rgba(255,200,110,.22)"); grd.addColorStop(1, "rgba(255,200,110,0)");
-      g.fillStyle = grd; g.fillRect(lx - 55, 17, 110, 90);
     }
-    const cbx = 6, cby = by + bh + 8;
-    g.fillStyle = "#5a3a20"; g.fillRect(cbx - 1, cby - 1, 40, 26); g.fillStyle = "#1f2a24"; g.fillRect(cbx, cby, 38, 24);
-    g.font = "6px DotGothic16, monospace"; g.textBaseline = "middle"; g.fillStyle = "rgba(240,240,230,.8)";
-    g.fillText("QUIZ", cbx + 4, cby + 8); g.fillText("TUES 7PM", cbx + 3, cby + 18);
-    const dx = W - 22, dy = by + bh + 18;
-    for (const [rr, c] of [[11, "#1a1a1a"], [9, "#e8dcc0"], [7, "#1a1a1a"], [5, "#c0392b"], [3, "#2e8b57"], [1, "#c0392b"]]) { g.fillStyle = c; g.beginPath(); g.arc(dx, dy, rr, 0, 6.29); g.fill(); }
-    const cy = Math.floor(H * 0.8);
-    g.fillStyle = "#5a3418"; g.fillRect(0, cy, W, 4); g.fillStyle = "#7a4a24"; g.fillRect(0, cy, W, 1);
-    g.fillStyle = "#3a2010"; g.fillRect(0, cy + 4, W, H - cy);
-    for (const p of pub.punters) {
-      const y = cy + 2, x = p.x, lift = !reduce && Math.sin(t * p.sp + p.ph) > 0.9;
-      g.fillStyle = p.shirt; g.fillRect(x, y - 9, 9, 10);
-      g.fillStyle = p.skin; g.fillRect(x + 2, y - 15, 5, 6);
-      g.fillStyle = p.hair; g.fillRect(x + 2, y - 16, 5, 2);
-      if (p.pint) { const py = lift ? y - 15 : y - 5, px = x + 9; g.fillStyle = "#e09a30"; g.fillRect(px, py, 3, 5); g.fillStyle = "#fff6e0"; g.fillRect(px, py - 1, 3, 1); }
+    // hanging plants at the edges, swaying a touch
+    for (const px of [6, W - 10]) {
+      const sw = reduce ? 0 : Math.round(Math.sin(t * 0.6 + px) * 1);
+      g.fillStyle = "#2a160a"; g.fillRect(px + 2, 0, 1, 20);
+      g.fillStyle = "#7a4a24"; g.fillRect(px, 20, 6, 4);
+      g.fillStyle = "#3f8a52"; for (let k = 0; k < 6; k++) g.fillRect(px + k + sw * (k % 2), 24, 1, 4 + ((k * 3) % 7));
+      g.fillStyle = "#6fc07a"; g.fillRect(px + 1, 21, 4, 1);
     }
-    const v = g.createRadialGradient(W / 2, H / 2, W * 0.25, W / 2, H / 2, W * 0.95);
-    v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(20,10,30,.5)");
-    g.fillStyle = v; g.fillRect(0, 0, W, H);
+    // warm glow over everything
+    const gl = g.createRadialGradient(W / 2, H * 0.4, 4, W / 2, H * 0.4, W * 0.9);
+    gl.addColorStop(0, "rgba(255,190,110,.12)"); gl.addColorStop(1, "rgba(20,8,20,.35)");
+    g.fillStyle = gl; g.fillRect(0, 0, W, H);
   }
 
   function frame(now) {

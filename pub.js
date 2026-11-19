@@ -75,7 +75,7 @@ const Pub = (() => {
         ${resume ? `<button class="btn big amber" data-pub="resume"><b>CARRY ON: ${esc(st.team)}</b><small>${tuesday(st.week)} · round ${st.round + 1} of 8</small></button>` : ""}
         <label class="lbl">Team name<input id="team" maxlength="28" value="${esc(team)}"></label>
         <div class="lbl">Bring two teammates <span class="lbl-note">(${party.length}/${PARTY})</span></div>
-        <div class="mates">${CHAR_ORDER.filter((id) => id !== "connor").map(mateChip).join("")}</div>
+        <div class="mates">${CHAR_ORDER.filter((id) => id !== "connor" && RPG.available(id)).map(mateChip).join("")}</div>
         <p class="hint">Each teammate can give ${HINTS} hints a round. Higher level and a stronger subject mean better clues, but low levels can get it wrong.</p>
         <div class="lbl">Joker round (doubles your score)</div>
         <div class="jokers">${ROUNDS.map((r, i) => `<button class="jk ${i === 5 ? "on" : ""}" data-pub="joker" data-v="${i}">${i + 1}. ${esc(r.name)}</button>`).join("")}</div>
@@ -136,12 +136,14 @@ const Pub = (() => {
     const ups = [];
     st.ids[i].forEach((id, k) => {
       if (!st.marks[i][k]) return;
+      RPG.bump("correct");
       const it = itemById(id), h = st.hints && st.hints[i][k];
       ups.push(RPG.gain("connor", it.c, 1));
       for (const m of st.party || []) ups.push(RPG.gain(m, it.c, h && h.id === m ? 3 : 1));
     });
     const seen = new Set();
     ups.filter(Boolean).reverse().forEach((u) => { if (!seen.has(u.id)) { seen.add(u.id); UI.levelUp(u); } });
+    setTimeout(UI.unlockCheck, 1200);
   }
   function move(d) { st.q = Math.max(0, Math.min(PER - 1, st.q + d)); save(); question(); }
   function handin() {
@@ -190,6 +192,7 @@ const Pub = (() => {
       const hist = UI.LS("rd.pubhist", []);
       hist.push({ date: tuesday(st.week), team: st.team, score: meRow.total, max: PER * (ROUNDS.length + 1), place: ord(meRow.place) });
       UI.SAVE("rd.pubhist", hist.slice(-40));
+      if (meRow.place === 1) { RPG.bump("pubWins"); setTimeout(UI.unlockCheck, 800); }
     }
     save();
     UI.show(`${UI.bar(last ? "FINAL SCORES" : "AFTER ROUND " + (i + 1))}

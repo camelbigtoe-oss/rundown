@@ -37,7 +37,8 @@ const Sprites = (() => {
     const bt = s.bottom || { style: "pants", color: "#333" };
     const bc = bt.color, bs = shade(bc, -0.25);
     const longHair = ["long", "streak"].includes(s.hairStyle);
-    const longSleeve = ["hoodie", "cardigan", "suit", "jumper", "coat", "blazer", "denim", "cloak", "gown"].includes(t.style);
+    const longSleeve = ["hoodie", "cardigan", "suit", "jumper", "coat", "blazer", "denim", "cloak", "gown", "bodysuit"].includes(t.style) || !!t.sleeve;
+    const bk = s.bust ? (s.bust >= 2 ? 2 : 1) : 0; // fuller figure: wider chest, arms sit further out
 
     // floor shadow
     P("rgba(0,0,0,.25)", L - 2, 46, b.tw + 4, 1);
@@ -56,12 +57,13 @@ const Sprites = (() => {
     if (t.style === "dress" || t.style === "gown") skinTop = t.style === "gown" ? 46 : 39;
     if (t.style === "coat") skinTop = 31;
     for (const [x, w] of legs) {
-      if (bt.style === "pants" || bt.style === "jeans") { P(bc, x, 31, w, 13); P(bs, x + w - 1, 31, 1, 13); }
+      if (bt.style === "pants" || bt.style === "jeans" || bt.style === "tights") { P(bc, x, 31, w, 13); P(bs, x + w - 1, 31, 1, 13); }
       else { P(sk, x, skinTop, w, 44 - skinTop); P(sks, x + w - 1, skinTop, 1, 44 - skinTop); }
       if (s.socks) {
         const top = s.socks.knee === false ? 41 : 38;
         P(s.socks.color, x, top, w, 44 - top); P(shade(s.socks.color, -0.18), x + w - 1, top, 1, 44 - top);
         if (s.socks.stripe) { P(s.socks.stripe, x, top, w, 1); P(s.socks.stripe, x, top + 2, w, 1); }
+        if (s.socks.net) { const nt = s.socks.from || 33; P(sk, x, nt, w, 44 - nt); for (let yy = nt; yy < 44; yy++) for (let xx = x; xx < x + w; xx++) if ((xx + yy) % 2 === 0) P(s.socks.color, xx, yy, 1, 1); }
       }
     }
     // shoes
@@ -76,6 +78,9 @@ const Sprites = (() => {
         P(sh.accent || "#111", sx + 3, 44, 1, 2);
         P(sh.sole || "#eee", sx, 46, sw, 1);
         P(shade(sh.color, 0.3), x + 1, 42, 2, 1);
+      } else if (sh.style === "tall") {
+        P(sh.color, x, 35, w, 10); P(sh.color, sx, 44, sw, 2); P(sh.sole || "#111", sx, 46, sw, 1);
+        P(shade(sh.color, 0.3), x + 1, 36, 1, 7); P(sh.accent || shade(sh.color, -0.3), x, 35, w, 1);
       } else if (sh.style === "boot") {
         P(sh.color, x, 40, w, 5); P(sh.color, sx, 44, sw, 2); P(sh.sole || "#222", sx, 46, sw, 1);
         P(shade(sh.color, 0.25), x + 1, 41, 1, 3);
@@ -104,8 +109,9 @@ const Sprites = (() => {
     if (s.belly) { P(tc, L - 1, 24, b.tw + 2, 7); P(ts, R + 1, 24, 1, 7); P(tl, L - 1, 25, 1, 5); }
     if (s.build === "curvy") { P(tc, L - 1, 27, b.tw + 2, 4); P(ts, R + 1, 27, 1, 4); }
     P(ts, R - 1, 17, 2, 14); P(tl, L, 18, 1, 12);
+    if (bk) { P(tc, L - bk, 18, bk, 5 + bk); P(tc, R + 1, 18, bk, 5 + bk); P(ts, R + bk, 19, 1, 3 + bk); }
     // shoulder rounding
-    P(tc, L - b.arm + 1, 17, b.arm - 1, 1); P(tc, R + 1, 17, b.arm - 1, 1);
+    P(tc, L - b.arm - bk + 1, 17, b.arm - 1, 1); P(tc, R + bk + 1, 17, b.arm - 1, 1);
 
     // style details
     if (t.style === "tee" || t.style === "jersey") {
@@ -163,6 +169,16 @@ const Sprites = (() => {
       P(t.inner || "#1b1b2b", mid - 2, 17, 4, 14); P(ts, mid - 3, 17, 1, 23); P(ts, mid + 2, 17, 1, 23);
       P(ts, R, 17, 1, 23); P("#9ad", L + 1, 24, 3, 1);
     }
+    if (t.style === "corset") {
+      P(sk, L + 1, 17, b.tw - 2, 2); P(sks, L + 1, 18, b.tw - 2, 1);
+      P(t.trim || "#6a2a5a", L - bk, 19, b.tw + 2 * bk, 1);
+      for (let y = 21; y < 30; y += 2) { P(t.trim || "#6a2a5a", mid - 2, y, 1, 1); P(t.trim || "#6a2a5a", mid + 1, y, 1, 1); P(t.trim || "#6a2a5a", mid - 1, y + 1, 2, 1); }
+      P(shade(tc, 0.18), L + 1, 24, 2, 4); P(shade(tc, 0.18), R - 2, 24, 1, 4);
+    }
+    if (t.style === "bodysuit") {
+      P(tc, mid - 2, 16, 4, 1); P(t.accent || "#ff4d5e", L - bk, 21, b.tw + 2 * bk, 1); P(t.accent || "#ff4d5e", mid - 1, 22, 2, 9);
+      P(t.accent || "#ff4d5e", L, 30, b.tw, 1); P(shade(tc, 0.2), L + 1, 25, 2, 3);
+    }
     if (t.style === "cloak") {
       P(shade(tc, -0.3), L - b.arm, 17, b.tw + 2 * b.arm, 4);
       for (let y = 18; y < 40; y += 2) for (let x = L - b.arm; x < R + b.arm + 1; x += 3) P((x + y) % 4 ? shade(tc, 0.25) : shade(tc, -0.2), x + ((y / 2) % 2), y, 2, 1);
@@ -170,14 +186,22 @@ const Sprites = (() => {
       P(t.trim || "#e9e1cf", mid - 1, 18, 2, 1);
     }
 
+    if (bk) {
+      P("rgba(0,0,0,.22)", L - bk + 1, 22 + bk, b.tw + 2 * bk - 2, 1);
+      P("rgba(0,0,0,.14)", mid - 1, 20, 1, 2 + bk);
+      P("rgba(255,255,255,.16)", L + 1, 19, 2, 1); P("rgba(255,255,255,.16)", mid + 1, 19, 2, 1);
+    }
+    if (s.choker) { P(s.choker, 14, 16, 4, 1); P(s.chokerGem || "#c0304a", 15, 16, 1, 1); }
     // arms
     const armTop = 18;
     for (const side of [0, 1]) {
-      const ax = side ? R + 1 : L - b.arm;
+      const ax = side ? R + 1 + bk : L - b.arm - bk;
       const ac = t.style === "cloak" ? shade(tc, -0.1) : tc;
       if (t.style === "cloak") { P(ac, ax, armTop, b.arm, 15); P(sk, ax + (side ? 0 : 1), 33, b.arm - 1, 2); continue; }
-      if (longSleeve) {
-        P(ac, ax, armTop, b.arm, 12); P(shade(ac, -0.3), ax, 29, b.arm, 1);
+      if (t.style === "corset" && !t.sleeve) { P(sk, ax, armTop, b.arm, 12); P(sks, side ? ax + b.arm - 1 : ax, armTop, 1, 12); }
+      else if (longSleeve) {
+        const ac2 = t.sleeve || ac;
+        P(ac2, ax, armTop, b.arm, 12); P(shade(ac, -0.3), ax, 29, b.arm, 1);
         if (side) P(ts, ax + b.arm - 1, armTop, 1, 11); else P(tl, ax, armTop + 1, 1, 9);
       } else {
         P(ac, ax, armTop, b.arm, 4); P(shade(ac, -0.25), ax, armTop + 3, b.arm, 1);
@@ -202,7 +226,7 @@ const Sprites = (() => {
     if (s.lashes) { P("#2a1a22", 11, 8, 1, 1); P("#2a1a22", 20, 8, 1, 1); P("#2a1a22", 12, 8, 2, 1); P("#2a1a22", 18, 8, 2, 1); }
     P(sks, 15, 11, 2, 1);
     if (s.blush) { P("rgba(255,110,140,.3)", 11, 11, 2, 1); P("rgba(255,110,140,.3)", 19, 11, 2, 1); }
-    const mc = "#7a2a35";
+    const mc = s.lips || "#7a2a35";
     switch (s.mouth) {
       case "grin": P(mc, 13, 12, 6, 2); P("#fff", 14, 12, 4, 1); P("#e66a7a", 15, 13, 2, 1); break;
       case "stern": P(mc, 14, 13, 4, 1); break;
@@ -273,8 +297,8 @@ const Sprites = (() => {
     if (s.cap) { P(s.cap, 9, 1, 14, 4); P(shade(s.cap, -0.3), 7, 5, 9, 1); P(shade(s.cap, 0.3), 14, 2, 2, 1); }
   }
 
-  function url(id, spec) {
-    if (cache.has(id)) return cache.get(id);
+  function url(id, spec, fresh) {
+    if (!fresh && cache.has(id)) return cache.get(id);
     const c = document.createElement("canvas");
     c.width = W; c.height = H;
     draw(c.getContext("2d"), spec);

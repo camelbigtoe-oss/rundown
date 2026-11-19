@@ -49,8 +49,8 @@ What is the smallest controllable element of a digital image called?|Pixel|Byte;
 How many bits are in a byte?|8|4;16;10|eight
 Paddington Bear travelled to London from which country?|Peru|Bolivia;Chile;Brazil
 What is Sherlock Holmes's address in London?|221B Baker Street|10 Downing Street;12 Grimmauld Place;4 Privet Drive|221b baker street;221b;baker street
-In "Harry Potter and the Philosopher's Stone", what is the name of Hagrid's three-headed dog?|Fluffy|Fang;Norbert;Buckbeak
-What position does Harry Potter play in Quidditch?|Seeker|Keeper;Chaser;Beater
+In "Harry Potter and the Philosopher's Stone", what is the name of Hagrid's three-headed dog?|Fluffy|Fang;Norbert;Buckbeak||h
+What position does Harry Potter play in Quidditch?|Seeker|Keeper;Chaser;Beater||h
 Who is the Greek god of the sea?|Poseidon|Hermes;Ares;Apollo
 Who is the Roman equivalent of the Greek god Zeus?|Jupiter|Mars;Saturn;Neptune
 Which Norse god wields the hammer Mjölnir?|Thor|Odin;Loki;Freyr

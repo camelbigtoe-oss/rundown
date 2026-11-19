@@ -36,12 +36,19 @@ const Portraits = (() => {
     else if (st2 === "hoodie") { P(ts, 13, 29, 14, 3); P(sk, 18, 30, 4, 2); P("#eee", 17, 32, 1, 4); P("#eee", 22, 32, 1, 4); }
     else if (st2 === "jersey") { P(t.trim || "#fff", 16, 30, 8, 2); P(sk, 18, 30, 4, 1); }
     else if (st2 === "gown") { P(sk, 15, 30, 10, 4); P(t.trim || shade(tc, -0.4), 14, 33, 12, 1); }
+    else if (st2 === "corset") { P(sk, sx + 4, 30, sw - 8, 4); P(sks, sx + 5, 33, sw - 10, 1); P(t.trim || "#6a2a5a", sx + 2, 34, sw - 4, 1); for (let y = 36; y < 40; y += 2) P(t.trim || "#6a2a5a", 19, y, 2, 1); }
+    else if (st2 === "bodysuit") { P(tc, 16, 28, 8, 3); P(t.accent || "#ff4d5e", sx, 36, sw, 1); P(t.accent || "#ff4d5e", 19, 31, 2, 9); }
     else if (st2 === "jumper") { P(ts, 16, 30, 8, 2); P(sk, 18, 30, 4, 1); }
     else { P(sk, 17, 30, 6, 2); P(sks, 18, 32, 4, 1); }
     if (t.graphic === "ring") { P("#f7c948", 19, 34, 2, 1); P("#f7c948", 18, 35, 1, 2); P("#f7c948", 21, 35, 1, 2); P("#f7c948", 19, 37, 2, 1); }
     if (t.graphic === "globe") { P("#2f6fb0", 18, 34, 4, 4); P("#4bbf6a", 18, 35, 2, 1); P("#4bbf6a", 20, 37, 2, 1); }
     if (t.graphic === "hivis") { P("#d4f21f", sx, 32, 6, 8); P("#d4f21f", sx + sw - 6, 32, 6, 8); P("#cfd6dd", sx, 36, 6, 1); P("#cfd6dd", sx + sw - 6, 36, 6, 1); }
     if (t.graphic === "stripe") { P(t.stripe || "#fff", sx, 36, sw, 2); }
+    if (s.bust) {
+      P("rgba(255,255,255,.16)", 13, 35, 5, 1); P("rgba(255,255,255,.16)", 22, 35, 5, 1);
+      P("rgba(0,0,0,.2)", 19, 35, 2, 4); P("rgba(0,0,0,.22)", 12, 39, 16, 1);
+    }
+    if (s.choker) { P(s.choker, 17, 27, 6, 1); P(s.chokerGem || "#c0304a", 19, 27, 2, 1); }
     if (s.pounamu) { P("#2fa36b", 19, 33, 2, 3); P("#7be0a8", 19, 33, 1, 1); }
 
     // head: anime shape with a tapered chin
@@ -70,7 +77,7 @@ const Portraits = (() => {
     else { P(brow, 13, 12, 5, 1); P(brow, 22, 12, 5, 1); }
     // nose, mouth, cheeks
     P(sks, 20, 20, 1, 2);
-    const mc = "#7a2a35";
+    const mc = s.lips || "#7a2a35";
     switch (s.mouth) {
       case "grin": P(mc, 17, 22, 6, 3); P("#fff", 18, 22, 4, 1); P("#e66a7a", 18, 24, 4, 1); break;
       case "stern": P(mc, 18, 23, 4, 1); break;
@@ -128,8 +135,8 @@ const Portraits = (() => {
     if (s.cap) { P(s.cap, 10, 2, 20, 8); P(shade(s.cap, 0.25), 13, 3, 8, 1); P(shade(s.cap, -0.35), 7, 9, 16, 2); P(hc, 9, 10, 3, 6); P(hc, 28, 10, 3, 5); }
   }
 
-  function url(id, spec) {
-    if (cache.has(id)) return cache.get(id);
+  function url(id, spec, fresh) {
+    if (!fresh && cache.has(id)) return cache.get(id);
     const c = document.createElement("canvas"); c.width = N; c.height = N;
     paint(c.getContext("2d"), spec);
     const u = c.toDataURL("image/png"); cache.set(id, u); return u;

@@ -48,6 +48,7 @@ const RPG = (() => {
     const chars = a.replace(/[^A-Za-z0-9À-ÿ]/g, "");
     const digits = /^\d+$/.test(chars), words = a.trim().split(/\s+/).length;
     let tier, text;
+    if (CHARS[id] && CHARS[id].perk === "hp" && item.hp) return { tier: 5, text: `Harry Potter? Easy. It's ${a}. I never get these wrong.` };
     if (pw >= 250 && wrongs.length) {
       tier = 4;
       const right = rnd() < Math.min(0.97, 0.5 + s / 600 + (r ? r.lv : 0) / 400);
@@ -70,5 +71,38 @@ const RPG = (() => {
     }
     return { tier, text };
   }
-  return { CATS, SHORT, MAX, get, stat, stats, gain, need, best, hint, catOf };
+  // ---------- progress counters, unlocks and custom characters ----------
+  let prog;
+  try { prog = JSON.parse(localStorage.getItem("rd.prog")) || {}; } catch { prog = {}; }
+  prog = { soloWins: 0, caught: 0, total: 0, correct: 0, pubWins: 0, beat: {}, unlocked: [], ...prog };
+  const saveProg = () => { try { localStorage.setItem("rd.prog", JSON.stringify(prog)); } catch {} };
+  function bump(key, n = 1) { prog[key] = (prog[key] || 0) + n; saveProg(); }
+  function beat(h) { prog.beat[h] = true; saveProg(); }
+  const isUnlocked = (id) => prog.unlocked.includes(id);
+  const available = (id) => !!CHARS[id] && (!CHARS[id].hidden || isUnlocked(id));
+  // returns ids that were just unlocked
+  function checkUnlocks() {
+    const out = [];
+    for (const [id, u] of Object.entries(UNLOCKS)) if (!isUnlocked(id) && u.test(prog)) { prog.unlocked.push(id); out.push(id); }
+    if (out.length) saveProg();
+    return out;
+  }
+
+  let custom;
+  try { custom = JSON.parse(localStorage.getItem("rd.custom")) || []; } catch { custom = []; }
+  const saveCustom = () => { try { localStorage.setItem("rd.custom", JSON.stringify(custom)); } catch {} };
+  function register(c) {
+    CHARS[c.id] = { name: c.name, tag: c.tag || "Custom character", spec: c.spec, custom: true };
+    if (!BASE[c.id]) BASE[c.id] = { lv: 10, stats: c.stats };
+    if (!CHAR_ORDER.includes(c.id)) CHAR_ORDER.push(c.id);
+  }
+  custom.forEach(register);
+  function addCustom(c) { custom.push(c); saveCustom(); register(c); }
+  function removeCustom(id) {
+    custom = custom.filter((c) => c.id !== id); saveCustom();
+    delete CHARS[id]; delete BASE[id]; delete store[id]; save();
+    const i = CHAR_ORDER.indexOf(id); if (i >= 0) CHAR_ORDER.splice(i, 1);
+  }
+
+  return { CATS, SHORT, MAX, get, stat, stats, gain, need, best, hint, catOf, bump, beat, isUnlocked, available, checkUnlocks, addCustom, removeCustom, get prog() { return prog; } };
 })();

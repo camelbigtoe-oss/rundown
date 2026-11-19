@@ -12,7 +12,7 @@ const CHARS = {
     },
   },
   mel: {
-    name: "Mel", tag: "Cool as",
+    name: "Mel", tag: "Pop culture queen. Never wrong on Harry Potter.", perk: "hp",
     spec: {
       build: "curvy", skin: "#f2c6a6", hair: "#f2cf73", hairStyle: "long", mouth: "grin", blush: 1, lashes: 1, eye: "#2d5a7a",
       top: { style: "cardigan", color: "#efe0c4", inner: "#d98ca6", button: "#b48b5a" },
@@ -214,7 +214,7 @@ const BASE = (() => {
     jackie: { lv: 42, stats: S(175, { gk: 185, nz: 180, hist: 182, ent: 178, sport: 160 }) },
     zach: { lv: 24, stats: S(105, { geo: 205, gk: 122, hist: 115 }) },
     jeremy: { lv: 24, stats: S(100, { sport: 205, nz: 150, gk: 115, ent: 110 }) },
-    mel: { lv: 15, stats: S(110, { ent: 135 }) },
+    mel: { lv: 32, stats: S(160, { ent: 210, gk: 185, nz: 165 }) },
     aroha: { lv: 18, stats: S(100, { nz: 175, hist: 140 }) },
     steve: { lv: 12, stats: S(82, { sport: 170, gk: 95 }) },
     priya: { lv: 20, stats: S(110, { sci: 195, geo: 125 }) },
@@ -223,3 +223,77 @@ const BASE = (() => {
     jess: { lv: 16, stats: S(95, { ent: 190 }) },
   };
 })();
+
+// ---------- hidden characters: unlocked by challenges (see UNLOCKS) ----------
+Object.assign(CHARS, {
+  raven: {
+    name: "Raven Noir", tag: "Goth queen of the history round", hidden: true,
+    spec: {
+      build: "curvy", bust: 2, skin: "#f3e3e6", hair: "#141018", hairStyle: "long", eye: "#8a3ad0", lashes: 1, lips: "#5a0a2a", mouth: "smirk", choker: "#111", earring: "#c9c9d6",
+      top: { style: "corset", color: "#1a1020", trim: "#7a2a6a" }, bottom: { style: "skirt", color: "#141018" },
+      socks: { color: "#111", net: 1, from: 37 }, shoes: { style: "tall", color: "#111" },
+    },
+  },
+  velvet: {
+    name: "Velvet Hex", tag: "Witchy. Mixes potions and science.", hidden: true,
+    spec: {
+      build: "curvy", bust: 2, skin: "#ecd6d2", hair: "#5a2a8a", hairStyle: "streak", eye: "#d04a8a", lashes: 1, lips: "#3a0a3a", mouth: "smile", choker: "#2a0a2a", chokerGem: "#9a5ad0",
+      top: { style: "gown", color: "#2a0f3a", trim: "#9a5ad0", sleeve: "#3a1a4a" }, bottom: { style: "none", color: "#000" },
+      shoes: { style: "heel", color: "#141014" },
+    },
+  },
+  nyx: {
+    name: "Nyx", tag: "Punk goth. Knows every song.", hidden: true,
+    spec: {
+      build: "avg", bust: 2, skin: "#f0dcd6", hair: "#e8e8f0", hairStyle: "bob", eye: "#ff3a4a", lashes: 1, lips: "#2a0a1a", mouth: "smirk", choker: "#111", earring: "#c9c9d6",
+      top: { style: "denim", color: "#1a1a1a", inner: "#5a0a1a" }, bottom: { style: "skirt", color: "#2a1a2a" },
+      socks: { color: "#111", net: 1, from: 35 }, shoes: { style: "tall", color: "#141414" },
+    },
+  },
+  rei: {
+    name: "Rei Nova", tag: "Starship pilot. Science ace.", hidden: true,
+    spec: {
+      build: "curvy", bust: 2, skin: "#f6dccb", hair: "#3fa7ff", hairStyle: "long", eye: "#ff6f8e", lashes: 1, mouth: "grin", blush: 1,
+      top: { style: "bodysuit", color: "#eef2f6", accent: "#ff4d5e" }, bottom: { style: "tights", color: "#eef2f6" },
+      shoes: { style: "boot", color: "#ff4d5e", sole: "#3a0a10" },
+    },
+  },
+  ember: {
+    name: "Ember", tag: "Fire mage. Lives for sport.", hidden: true,
+    spec: {
+      build: "curvy", bust: 2, skin: "#f2c8a8", hair: "#ff4d2a", hairStyle: "ponytail", eye: "#ffb020", lashes: 1, lips: "#c0302a", mouth: "smile", earring: "#ffd166",
+      top: { style: "dress", color: "#b3132b", trim: "#ffd166" }, bottom: { style: "none", color: "#000" },
+      shoes: { style: "tall", color: "#4a1a0a", accent: "#ffd166" },
+    },
+  },
+  yuki: {
+    name: "Yuki Storm", tag: "Ice ninja. Has been everywhere.", hidden: true,
+    spec: {
+      build: "avg", bust: 2, strong: 1, skin: "#f4e6dc", hair: "#dff4ff", hairStyle: "long", eye: "#6fe3ff", lashes: 1, mouth: "smirk",
+      top: { style: "bodysuit", color: "#1d2a5a", accent: "#bfefff" }, bottom: { style: "tights", color: "#1d2a5a" },
+      shoes: { style: "tall", color: "#bfefff", accent: "#1d2a5a" },
+    },
+  },
+});
+CHAR_ORDER.push("raven", "velvet", "nyx", "rei", "ember", "yuki");
+(() => {
+  const S = (all, o = {}) => ({ gk: all, nz: all, geo: all, sci: all, sport: all, ent: all, hist: all, ...o });
+  Object.assign(BASE, {
+    raven: { lv: 35, stats: S(130, { hist: 200, ent: 160 }) },
+    velvet: { lv: 35, stats: S(130, { sci: 195, hist: 160 }) },
+    nyx: { lv: 35, stats: S(130, { ent: 200, gk: 150 }) },
+    rei: { lv: 35, stats: S(130, { sci: 200, geo: 160 }) },
+    ember: { lv: 35, stats: S(130, { sport: 195, gk: 150 }) },
+    yuki: { lv: 35, stats: S(130, { geo: 200, nz: 150 }) },
+  });
+})();
+
+// challenge to unlock each hidden character; p = progress counters (rpg.js)
+const UNLOCKS = {
+  raven: { hint: "Win a solo run", test: (p) => p.soloWins >= 1 },
+  nyx: { hint: "Get caught 3 times", test: (p) => p.caught >= 3 },
+  ember: { hint: "Beat Kahu or Dr. Null", test: (p) => !!(p.beat.kahu || p.beat.null) },
+  rei: { hint: "Win $100,000 in total", test: (p) => p.total >= 100000 },
+  yuki: { hint: "Answer 150 questions right", test: (p) => p.correct >= 150 },
+  velvet: { hint: "Come 1st at a Tuesday quiz", test: (p) => p.pubWins >= 1 },
+};

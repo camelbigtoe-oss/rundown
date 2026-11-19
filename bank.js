@@ -24,7 +24,7 @@ const Bank = (() => {
       const [q, a, w = "", x = "", f = ""] = line.split("|").map((p) => p.trim());
       const wrong = w.split(";").map((s) => s.trim()).filter(Boolean);
       if (!q || !a || wrong.length < 3) { console.warn("bad question", line); continue; }
-      const item = { id: cat + "-" + hash(q), c: cat, q, a, w: wrong, x: x.split(";").map((s) => s.trim()).filter(Boolean), m: f.includes("m") };
+      const item = { id: cat + "-" + hash(q), c: cat, q, a, w: wrong, x: x.split(";").map((s) => s.trim()).filter(Boolean), m: f.includes("m"), hp: f.includes("h") };
       all.push(item); byCat[cat].push(item);
     }
   }
@@ -46,7 +46,7 @@ const Bank = (() => {
 
   function pose(item, n) {
     const opts = shuffle([item.a, ...shuffle(item.w.slice()).slice(0, n - 1)]);
-    return { id: item.id, c: item.c, q: item.q, opts, ans: opts.indexOf(item.a), a: item.a };
+    return { id: item.id, c: item.c, q: item.q, opts, ans: opts.indexOf(item.a), a: item.a, hp: item.hp };
   }
 
   function norm(s) {
