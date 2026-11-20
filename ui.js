@@ -398,6 +398,7 @@ const UI = (() => {
     const cur = s.players[s.turn];
     if (act === "go") return pid === s.host || (s.phase === "turnIntro" && cur && pid === cur.id);
     if (act === "final") return s.players.some((p) => p.id === pid && p.result === "home");
+    if (act === "speed") return true;
     return cur && pid === cur.id;
   }
   function send(act, val) {
@@ -645,7 +646,7 @@ const UI = (() => {
     return `<section class="play">
       <div class="hud">
         <div class="who red-t"><small>HUNTER</small><b class="big-n">${f.hs}</b></div>
-        <div class="clock ${f.paused ? "paused" : ""}" ${remain == null ? `data-end="${f.end}"` : ""}>${remain == null ? "2:00" : fmt(remain)}</div>
+        <div class="clock ${f.paused ? "paused" : ""}" ${remain == null ? `data-end="${f.end}" data-speed="${f.speed || 1}"` : ""}>${remain == null ? "2:00" : fmt(remain * (f.speed || 1))}</div>
         <div class="bank"><small>TARGET</small><b class="big-n">${f.score}</b></div>
       </div>
       <div class="chase-track">
@@ -655,6 +656,7 @@ const UI = (() => {
       </div>
       <div class="hunter-row">${bubble(s.line)}</div>
       ${qa}
+      ${canAct(s, "speed") ? `<button class="btn speed ${f.speed === 2 ? "on" : ""}" data-send="speed"><b>${f.speed === 2 ? "▶▶ 2× SPEED ON · TAP FOR NORMAL" : "▶▶ 2× SPEED"}</b><small>Speeds up the hunter only. Pushbacks stay at normal time.</small></button>` : ""}
     </section>`;
   }
 
@@ -666,7 +668,7 @@ const UI = (() => {
     requestAnimationFrame(frame);
     const now = Date.now() - skew;
     for (const el of $$("[data-end]")) {
-      const left = +el.dataset.end - now; const txt = fmt(left);
+      const left = (+el.dataset.end - now) * (+el.dataset.speed || 1); const txt = fmt(left);
       if (el.textContent !== txt) {
         el.textContent = txt;
         if (left <= 10000 && left > 0) { el.classList.add("hot"); if (Math.ceil(left / 1000) !== lastTick) { lastTick = Math.ceil(left / 1000); Sfx.tick(); } }

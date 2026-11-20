@@ -51,6 +51,7 @@ const Engine = (() => {
       if (act === "go") return pid === s.host || (s.phase === "turnIntro" && pid === this.cur().id);
       if (act === "skip") return pid === s.host;
       if (act === "final") return s.players.some((p) => p.id === pid && p.result === "home");
+      if (act === "speed") return s.players.some((p) => p.id === pid);
       return pid === this.cur()?.id;
     }
 
@@ -68,6 +69,7 @@ const Engine = (() => {
       else if (act === "take") this.take(val);
       else if (act === "board") this.boardAns(val);
       else if (act === "final") this.finalAns(pid, val);
+      else if (act === "speed" && ph === "finalH") this.setSpeed(this.s.final.speed === 2 ? 1 : 2);
       else if (act === "skip" && ["turnIntro", "cash", "offer", "board"].includes(ph)) { this.timers.forEach(clearTimeout); this.timers = []; this.endTurn("skipped"); }
     }
 
@@ -172,7 +174,7 @@ const Engine = (() => {
     // ---- final chase: the hunter's run ----
     startFinalH() {
       const f = this.s.final;
-      Object.assign(f, { hs: 0, end: Date.now() + FINAL_TIME, paused: false, remain: 0, push: null, hq: null, hk: 0 });
+      Object.assign(f, { hs: 0, end: Date.now() + FINAL_TIME, paused: false, remain: 0, push: null, hq: null, hk: 0, speed: 1 });
       this.s.phase = "finalH"; this.s.line = ""; this.emit();
       this.later(800, () => this.hunterNext());
     }
@@ -181,7 +183,7 @@ const Engine = (() => {
       const q = Bank.next(4, this.avoid);
       this.hAns = q.ans;
       f.hq = { q: q.q, opts: q.opts, ans: null, hp: null, k: ++f.hk };
-      this.hDue = Date.now() + this.H.speed * 1000 * rand(0.7, 1.3);
+      this.hDue = Date.now() + (this.H.speed * 1000 * rand(0.7, 1.3)) / (f.speed || 1);
       this.emit();
     }
     hunterTick(now) {
@@ -200,7 +202,7 @@ const Engine = (() => {
         if (right) {
           f.hs++;
           if (f.hs >= f.score) return this.endFinal(false);
-          this.emit(); this.later(650, () => this.hunterNext());
+          this.emit(); this.later(650 / (f.speed || 1), () => this.hunterNext());
         } else {
           f.remain = f.end - now; f.paused = true; s.line = this.say("wrong");
           const opts = f.hq.opts.filter((_, i) => i !== f.hq.hp);
@@ -208,6 +210,14 @@ const Engine = (() => {
           this.emit();
         }
       }
+    }
+    // 2x speed: the hunter's remaining time and current thinking time are squeezed (or stretched back)
+    setSpeed(sp) {
+      const f = this.s.final, now = Date.now(), old = f.speed || 1; if (sp === old) return;
+      const k = old / sp;
+      if (f.paused) f.remain *= k; else f.end = now + (f.end - now) * k;
+      if (this.hDue) this.hDue = now + Math.max(0, this.hDue - now) * k;
+      f.speed = sp; this.emit();
     }
     resume() {
       const f = this.s.final; if (this.s.phase !== "finalH") return;
@@ -217,7 +227,7 @@ const Engine = (() => {
     endFinal(teamWon) {
       const s = this.s; this.timers.forEach(clearTimeout); this.timers = [];
       s.phase = "end"; s.won = teamWon;
-      if (s.final) s.final.left = Math.max(0, s.final.end - Date.now());
+      if (s.final) s.final.left = Math.max(0, s.final.end - Date.now()) * (s.final.speed || 1);
       const home = s.players.filter((p) => p.result === "home");
       if (teamWon) home.forEach((p) => (p.won = Math.round(s.pot / home.length)));
       s.line = this.say(teamWon ? "lose" : "win"); this.emit();
