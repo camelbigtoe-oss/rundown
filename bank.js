@@ -56,15 +56,19 @@ const Bank = (() => {
     return String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
       .replace(/&/g, " and ").replace(/[^a-z0-9 ]/g, " ").replace(/\b(the|a|an)\b/g, " ").replace(/\s+/g, " ").trim();
   }
+  // edit distance where swapping two neighbouring letters ("calcuim") counts as one slip, not two
   function lev(a, b) {
     const m = a.length, n = b.length; if (!m) return n; if (!n) return m;
-    let prev = Array.from({ length: n + 1 }, (_, i) => i);
+    const d = Array.from({ length: m + 1 }, (_, i) => [i]);
+    for (let j = 1; j <= n; j++) d[0][j] = j;
     for (let i = 1; i <= m; i++) {
-      const cur = [i];
-      for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
-      prev = cur;
+      for (let j = 1; j <= n; j++) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+        if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+      }
     }
-    return prev[n];
+    return d[m][n];
   }
   // typed answer check: exact after tidying, or a small typo on longer words; numbers must be exact
   // a typo is forgiven only if every short word (3 letters or fewer) is exact, so "Vitamin A" never passes for "Vitamin D"
